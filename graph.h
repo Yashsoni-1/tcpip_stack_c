@@ -69,8 +69,8 @@ get_node_if_by_name(node_t *node, char *if_name)
     int i = 0;
     for(; i < MAX_INTF_PER_NODE; ++i)
     {
-        if(strcmp(node->interfaces[i]->if_name,
-                  if_name) == 0)
+        if(strncmp(node->interfaces[i]->if_name,
+                  if_name, strlen(if_name)) == 0)
             return node->interfaces[i];
     }
     return NULL;
@@ -85,7 +85,7 @@ get_node_by_node_name(graph_t *topology, char *node_name)
     ITERATE_GLTHREAD_BEGIN(&(topology->node_list), glthread)
     {
         node = graph_glue_to_node(glthread);
-        if(strcmp(node->name, node_name) == 0)
+        if(strncmp(node->name, node_name, strlen(node_name)) == 0)
             return node;
     } ITERATE_GLTHREAD_END(&(topology->node_list),
                            glthread);
