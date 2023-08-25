@@ -3,30 +3,8 @@
 #include <string.h>
 
 
-graph_t *
-create_new_graph(char *topology_name)
-{
-    graph_t *graph = calloc(1, sizeof(graph));
-    strncpy(graph->topology_name, topology_name,
-            TOPO_NAME_SIZE);
-    graph->topology_name[TOPO_NAME_SIZE - 1] = '\0';
-    init_glthread(&graph->node_list);
-    return graph;
-}
-
-node_t *
-create_graph_node(graph_t *graph,
-                          char *node_name)
-{
-    node_t *node = calloc(1, sizeof(node_t));
-    strncpy(node->name, node_name, NODE_NAME_SIZE);
-    node->name[NODE_NAME_SIZE - 1] = '\0';
-    init_glthread(&node->graph_glue);
-    init_node_nw_prop(&node->node_nw_prop);
-    glthread_add_next(&graph->node_list,
-                      &node->graph_glue);
-    return node;
-}
+extern void
+init_udp_socket(node_t *node);
 
 void
 insert_link_bw_two_nodes(node_t *node1,
@@ -65,5 +43,33 @@ insert_link_bw_two_nodes(node_t *node1,
     interface_assign_mac_address(&link->intf1);
     interface_assign_mac_address(&link->intf2);
 }
+
+graph_t *
+create_new_graph(char *topology_name)
+{
+    graph_t *topo = calloc(1, sizeof(graph_t));
+    strncpy(topo->topology_name, topology_name,
+            TOPO_NAME_SIZE);
+    topo->topology_name[TOPO_NAME_SIZE - 1] = '\0';
+    init_glthread(&topo->node_list);
+    return topo;
+}
+
+node_t *
+create_graph_node(graph_t *graph,
+                          char *node_name)
+{
+    node_t *node = calloc(1, sizeof(node_t));
+    strncpy(node->name, node_name, NODE_NAME_SIZE);
+    node->name[NODE_NAME_SIZE - 1] = '\0';
+    init_udp_socket(node);
+    init_glthread(&node->graph_glue);
+    init_node_nw_prop(&node->node_nw_prop);
+    glthread_add_next(&graph->node_list,
+                      &node->graph_glue);
+    return node;
+}
+
+
 
 
