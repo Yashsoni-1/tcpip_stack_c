@@ -1,7 +1,7 @@
 CC=gcc
 CFLAGS=-g
 TARGET:test.exe CommandParser/libcli.a 
-LIBS:-lpthread -L ./CommandParser -lcli -lrt
+LIBS=-lpthread -L ./CommandParser -lcli -lrt
 
 OBJS=gl_thread/gl_thread.o \
             graph.o \
@@ -36,9 +36,9 @@ CommandParser/libcli.a:
 
 
 clean:
-	rm *.o
-	rm gl_thread/gl_thread.o
-	rm *exe
+	rm -f *.o
+	rm -f gl_thread/gl_thread.o
+	rm -f *exe
 	(cd CommandParser; make clean)
     
 all:
