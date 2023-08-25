@@ -4,7 +4,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#define BDCST_MAC "ff:ff:ff:ff:ff:ff\0"
+
 
 typedef enum {
     FALSE,
@@ -12,8 +12,13 @@ typedef enum {
 } bool_t;
 
 
+void apply_mask(char *prefix, char mask, char *str_prefix);
 
+void layer2_fill_with_broadcast_mac(unsigned char *mac_array);
 
+#define IS_MAC_BROADCAST(mac) \
+ (mac[0] == 0xFF && mac[1] == 0xFF && mac[2] == 0xFF && \
+  mac[3] == 0xFF && mac[4] == 0xFF && mac[5] == 0xFF)
 
 
 
