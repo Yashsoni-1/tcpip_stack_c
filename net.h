@@ -5,6 +5,8 @@
 #include <stdlib.h>
 #include <memory.h>
 #include "utils.h"
+#include "tcpconst.h"
+
 
 typedef struct graph_ graph_t;
 typedef struct interface_ interface_t;
@@ -12,35 +14,77 @@ typedef struct node_ node_t;
 
 #define LO_MASK 32
 
-typedef struct ip_add_ {
-    char ip_addr[16];
+typedef enum {
+    ACCESS,
+    TRUNK,
+    L2_MODE_UNKNOWN
+} intf_l2_mode_t;
+
+static inline char *
+intf_l2_mode_str(intf_l2_mode_t intf_l2_mode)
+{
+    switch(intf_l2_mode) {
+        case ACCESS:
+            return "access";
+        case TRUNK:
+            return "trunk";
+        default:
+            return "l2_mode_unknown";
+    }
+}
+
+#pragma pack(push, 1)
+typedef struct ip_add_
+{
+    unsigned char ip_addr[16];
 } ip_add_t;
 
-typedef struct mac_add_ {
-    char mac[8];
+typedef struct mac_add_
+{
+    unsigned char mac[6];
 } mac_add_t;
+#pragma pack(pop)
+
+void print_mac(char *heading, unsigned char *mac_address);
+
+typedef struct arp_table_ arp_table_t;
+typedef struct mac_table_ mac_table_t;
+typedef struct rt_table_ rt_table_t;
+
 
 typedef struct node_nw_prop_
 {
     bool_t is_lp_addr_config;
+    arp_table_t *arp_table;
+    mac_table_t *mac_table;
+    rt_table_t *rt_table;
     ip_add_t lp_addr;
 } node_nw_prop_t;
+
+extern void init_arp_table(arp_table_t **arp_table);
+extern void init_mac_table(mac_table_t **mac_table);
+extern void init_rt_table(rt_table_t **rt_table);
+
 
 static inline void
 init_node_nw_prop(node_nw_prop_t *node_nw_prop)
 {
     node_nw_prop->is_lp_addr_config = FALSE;
     memset(node_nw_prop->lp_addr.ip_addr, 0, 16);
+    init_arp_table(&(node_nw_prop->arp_table));
+    init_mac_table(&(node_nw_prop->mac_table));
+    init_rt_table(&(node_nw_prop->rt_table));
 }
 
 typedef struct intf_nw_props_
 {
+    char mask;
     mac_add_t mac_add;
+    intf_l2_mode_t intf_l2_mode;
+    unsigned int vlans[MAX_VLAN_MEMBERSHIP];
     bool_t is_ipaddr_config;
     ip_add_t ip_add;
-    char mask;
 } intf_nw_props_t;
-
 
 static inline void
 init_intf_nw_prop(intf_nw_props_t *intf_nw_prop)
@@ -53,22 +97,36 @@ init_intf_nw_prop(intf_nw_props_t *intf_nw_prop)
     intf_nw_prop->mask = 0;
 }
 
-
 #define IF_MAC(intf_ptr) (intf_ptr->intf_nw_props.mac_add.mac)
 #define IF_IP(intf_ptr) (intf_ptr->intf_nw_props.ip_add.ip_addr)
 #define NODE_LO_ADD(node_ptr) (node_ptr->node_nw_prop.lp_addr.ip_addr)
-#define IS_INTF_L3_MODE(intf_ptr) (intf_ptr->intf_nw_props.is_ipaddr_config);
-
+#define NODE_ARP_TABLE(node_ptr)  (node_ptr->node_nw_prop.arp_table)
+#define NODE_MAC_TABLE(node_ptr) (node_ptr->node_nw_prop.mac_table)
+#define NODE_RT_TABLE(node_ptr) (node_ptr->node_nw_prop.rt_table)
+#define IS_INTF_L3_MODE(intf_ptr) (intf_ptr->intf_nw_props.is_ipaddr_config)
+#define IF_L2_MODE(intf_ptr) (intf_ptr->intf_nw_props.intf_l2_mode)
 
 bool_t node_set_loopback_address(node_t *node, char *ip_addr);
 bool_t node_set_intf_ip_address(node_t *node, char *local_if,
                            char *ip_addr, char mask);
 bool_t node_unset_intf_ip_address(node_t *node, char *local_if);
-
-
 void interface_assign_mac_address(interface_t *interface);
+interface_t *node_get_matching_subnet_interface(node_t *node,
+                                                char *ip_addr);
+unsigned int ip_p_to_n(char *ip_addr);
+void ip_n_to_p(unsigned int ip_addr,
+                                char *output_buffer);
+char *pkt_buffer_shift_right(char *pkt, unsigned int pkt_size,
+                             unsigned int total_buffer_size);
 
+
+unsigned int
+get_access_intf_operating_vlan_id(interface_t *interface);
+bool_t
+is_trunk_interface_vlan_enabled(interface_t *interface, unsigned int vlan_id);
 void dump_nw_graph(graph_t *graph);
+void dump_interface(interface_t *interface);
+void dump_node(node_t *node);
 
 
 
