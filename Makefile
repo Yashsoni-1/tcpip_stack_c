@@ -15,7 +15,7 @@ OBJS=gl_thread/gl_thread.o \
             utils.o \
 	    nwcli.o \
 	    Layer2/l2switch.o \
-	    pkt_dump.o \	
+	    pkt_dump.o 
 
 
 pkt_gen.exe:pkt_gen.o
