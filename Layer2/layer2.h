@@ -73,6 +73,9 @@ typedef struct arp_entry_ {
 } arp_entry_t;
 GLTHREAD_TO_STRUCT(arp_glue_arp_entry, arp_entry_t, arp_glue);
 
+void 
+send_arp_broadcast_request(node_t *node, interface_t *oif, char *ip_addr);
+
 void init_arp_table(arp_table_t **arp_table);
 
 bool_t arp_table_entry_add(arp_table_t *arp_table, arp_entry_t *arp_entry);
