@@ -4,6 +4,7 @@
 #include "CommandParser/libcli.h"
 
 extern graph_t *build_first_topo(void);
+extern void nw_init_cli(void);
 
 graph_t *topo = NULL;
 
