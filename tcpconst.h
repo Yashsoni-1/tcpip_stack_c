@@ -8,7 +8,7 @@
 #define ETH_IP 0x0800
 #define ICMP_PRO 1
 #define VLAN_8021Q_PROTO 0x8100
-#define MAX_VLAN_MEMBERSHIP 10
+
 
 
 
