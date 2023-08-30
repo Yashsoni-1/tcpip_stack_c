@@ -14,8 +14,6 @@ static int
 _send_pkt_out(int sock_fd, char *pkt_data, unsigned int pkt_size,
                          unsigned int dst_udp_port_no)
 {
-    printf("\nIn the function %s\n", __FUNCTION__);
-
     int rc = 0;
     struct sockaddr_in dest_addr;
     
@@ -47,8 +45,6 @@ get_next_udp_port_number()
 void
 init_udp_socket(node_t *node)
 {
-    printf("\nIn the function %s\n", __FUNCTION__);
-
     if(node->udp_port_number) return;
 
     node->udp_port_number = get_next_udp_port_number();
@@ -85,7 +81,6 @@ _pkt_receive(node_t *receiving_node,
              char *pkt_with_aux_data,
              unsigned int pkt_size)
 {
-    printf("\nIn the function %s\n", __FUNCTION__);
 
     char *recv_intf_name = pkt_with_aux_data;
     interface_t *recv_intf = get_node_if_by_name(receiving_node,
@@ -104,7 +99,6 @@ _pkt_receive(node_t *receiving_node,
 static void *
 _network_start_pkt_receiver_thread(void *arg)
 {
-    printf("\nIn the function %s\n", __FUNCTION__);
 
     node_t *node;
     glthread_t *curr;
@@ -163,8 +157,6 @@ _network_start_pkt_receiver_thread(void *arg)
 void
 network_start_pkt_receiver_thread(graph_t *topo)
 {
-    printf("\nIn the function %s\n", __FUNCTION__);
-
     pthread_attr_t attr;
     pthread_t recv_pkt_thread;
     
@@ -178,8 +170,6 @@ network_start_pkt_receiver_thread(graph_t *topo)
 int send_pkt_out(char *pkt, unsigned int pkt_size,
                  interface_t *interface)
 {
-    printf("\nIn the function %s\n", __FUNCTION__);
-
     int rc = 0;
     node_t *sending_node = interface->att_node;
     node_t *nbr_node = get_nbr_node(interface);
@@ -230,11 +220,7 @@ pkt_receive(node_t *node,
                  interface_t *interface,
                  char *pkt,
                  unsigned int pkt_size)
-{
-    printf("\n\nmsg recvd = %s, on node = %s, iif = %s\n", pkt, node->name, interface->if_name);
-    
-    return 0;
-    
+{   
     pkt = pkt_buffer_shift_right(pkt, pkt_size,
                                  MAX_PACKET_BUFFER_SIZE - IF_NAME_SIZE);
     layer2_frame_recv(node, interface, pkt, pkt_size);
