@@ -172,10 +172,10 @@ void nw_init_cli()
 
 			{
 				static param_t arp;
-                		init_param(&arp, CMD, "arp", 0,
-                                		0, INVALID, 0, "Dump ARP");
+                		init_param(&arp, CMD, "arp", show_arp_handler,
+                                		0, INVALID, 0, "Dump ARP Table");
                 		libcli_register_param(&node_name, &arp);
-				set_param_cmd_code(&arp, CMDCODE_DUMP_ARP);
+				set_param_cmd_code(&arp, CMDCODE_SHOW_NODE_ARP_TABLE);
 			}
 		}
         }
