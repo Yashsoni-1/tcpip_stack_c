@@ -55,7 +55,8 @@ build_first_topo(void) {
     return graph;
 }
 
-graph_t *build_linear_topo(void)
+graph_t *
+build_linear_topo(void)
 {
     
 #if 0
@@ -99,7 +100,8 @@ graph_t *build_linear_topo(void)
 }
 
 
-graph_t *build_simple_l2_switch_topo(void)
+graph_t *
+build_simple_l2_switch_topo(void)
 {
 #if 0
                                                  +-----------+
@@ -160,7 +162,8 @@ graph_t *build_simple_l2_switch_topo(void)
     return topo;
 }
 
-graph_t *build_dualswitch_topo()
+graph_t *
+build_dualswitch_topo()
 {
 #if 0
     
@@ -205,6 +208,16 @@ graph_t *build_dualswitch_topo()
     node_t *L2SW1 = create_graph_node(topo, "L2SW1");
     node_t *L2SW2 = create_graph_node(topo, "L2SW2");
     
+    
+    node_set_loopback_address(H1, "122.1.1.1");
+    node_set_loopback_address(H2, "122.1.1.2");
+    node_set_loopback_address(H3, "122.1.1.3");
+    node_set_loopback_address(H4, "122.1.1.4");
+    node_set_loopback_address(H5, "122.1.1.5");
+    node_set_loopback_address(H6, "122.1.1.6");
+    
+    
+    
     insert_link_bw_two_nodes(H1, L2SW1, "eth0/1", "eth0/2", 1);
     insert_link_bw_two_nodes(H2, L2SW1, "eth0/3", "eth0/7", 1);
     insert_link_bw_two_nodes(H3, L2SW1, "eth0/4", "eth0/6", 1);
@@ -213,12 +226,7 @@ graph_t *build_dualswitch_topo()
     insert_link_bw_two_nodes(H4, L2SW2, "eth0/11", "eth0/12", 1);
     insert_link_bw_two_nodes(H6, L2SW2, "eth0/11", "eth0/10", 1);
     
-    node_set_loopback_address(H1, "122.1.1.1");
-    node_set_loopback_address(H2, "122.1.1.2");
-    node_set_loopback_address(H3, "122.1.1.3");
-    node_set_loopback_address(H4, "122.1.1.4");
-    node_set_loopback_address(H5, "122.1.1.5");
-    node_set_loopback_address(H6, "122.1.1.6");
+    
     
     node_set_intf_ip_address(H1, "eth0/1",  "10.1.1.1", 24);
     node_set_intf_ip_address(H2, "eth0/3",  "10.1.1.2", 24);
@@ -252,6 +260,86 @@ graph_t *build_dualswitch_topo()
     return topo;
 }
 
+
+graph_t *
+L2_loop_topo(void)
+{
+#if 0
+    
+   
+                               +-----------+                              +-----------+
+                               |           | eth0/4                eth0/4 |           |
+                               +   L2SW4   +------------------------------+   L2SW3   +
+                               |           | TR, V10              TR, V10 |           |
+                               +-----------+                              +-----------+
+                                eth0/3| TR, V10                           eth0/8 | TR, V10
+                                      |                                          |
+                                      | eth0/7, TR, V10                          |eth0/9, TR, V10
+                                +-----------+                           +-----------+
+    +-----------+               |           |                           |           |
+    |           |10.1.1.1/24    |           | eth0/5              eth0/7|           |eth0/10       eth0/11+-----------+
+    +    H1     +---------------+   L2Sw1   +---------------------------+   L2Sw2   +---------------------|           |
+    | 122.1.1.1 |eth0/1  eth0/2 |           | TR, V10           TR, V10 |           |AC,V10    10.1.1.6/24+    H6     +
+    +-----------+       AC, V10 |           |                           |           |                     | 122.1.1.6 |
+                                +-----------+                           +-----------+                     +-----------+
+   
+   
+   
+   
+    
+#endif
+    
+    graph_t *topo = create_new_graph("L2 loop topo");
+    node_t *H1 = create_graph_node(topo, "H1");
+    node_t *H6 = create_graph_node(topo, "H6");
+    node_t *L2SW1 = create_graph_node(topo, "L2SW1");
+    node_t *L2SW2 = create_graph_node(topo, "L2SW2");
+    node_t *L2SW3 = create_graph_node(topo, "L2SW3");
+    node_t *L2SW4 = create_graph_node(topo, "L2SW4");
+    
+    node_set_loopback_address(H1, "122.1.1.1");
+    node_set_loopback_address(H6, "122.1.1.6");
+    
+    insert_link_bw_two_nodes(H1, L2SW1, "eth0/1", "eth0/2", 1);
+    insert_link_bw_two_nodes(L2SW1, L2SW2, "eth0/5", "eth0/7", 1);
+    insert_link_bw_two_nodes(L2SW2, L2SW3, "eth0/9", "eth0/8", 1);
+    insert_link_bw_two_nodes(L2SW3, L2SW4, "eth0/4", "eth0/4", 1);
+    insert_link_bw_two_nodes(L2SW4, L2SW1, "eth0/3", "eth0/7", 1);
+    insert_link_bw_two_nodes(L2SW2, H6, "eth0/10", "eth0/11", 1);
+    
+    node_set_intf_ip_address(H1, "eth0/1",  "10.1.1.1", 24);
+    node_set_intf_ip_address(H6, "eth0/11", "10.1.1.6", 24);
+    
+    node_set_intf_l2_mode(L2SW1, "eth0/2", ACCESS);
+    node_set_intf_vlan_membership(L2SW1, "eth0/2", 10);
+    node_set_intf_l2_mode(L2SW1, "eth0/7", TRUNK);
+    node_set_intf_vlan_membership(L2SW1, "eth0/7", 10);
+    node_set_intf_l2_mode(L2SW1, "eth0/5", TRUNK);
+    node_set_intf_vlan_membership(L2SW1, "eth0/5", 10);
+    
+   
+    node_set_intf_l2_mode(L2SW2, "eth0/7", TRUNK);
+    node_set_intf_vlan_membership(L2SW2, "eth0/7", 10);
+    node_set_intf_l2_mode(L2SW2, "eth0/10", ACCESS);
+    node_set_intf_vlan_membership(L2SW2, "eth0/10", 10);
+    node_set_intf_l2_mode(L2SW2, "eth0/9", TRUNK);
+    node_set_intf_vlan_membership(L2SW2, "eth0/9", 10);
+    
+    
+    node_set_intf_l2_mode(L2SW3, "eth0/8", TRUNK);
+    node_set_intf_vlan_membership(L2SW3, "eth0/8", 10);
+    node_set_intf_l2_mode(L2SW3, "eth0/4", TRUNK);
+    node_set_intf_vlan_membership(L2SW3, "eth0/4", 10);
+    
+    node_set_intf_l2_mode(L2SW4, "eth0/4", TRUNK);
+    node_set_intf_vlan_membership(L2SW4, "eth0/4", 10);
+    node_set_intf_l2_mode(L2SW4, "eth0/3", TRUNK);
+    node_set_intf_vlan_membership(L2SW4, "eth0/3", 10);
+    
+    network_start_pkt_receiver_thread(topo);
+    
+    return topo;
+}
 
 
 
