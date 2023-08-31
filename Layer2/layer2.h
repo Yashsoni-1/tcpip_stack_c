@@ -42,6 +42,8 @@ typedef struct ethernet_hdr_
 static inline ethernet_hdr_t*
 ALLOC_ETH_HDR_WITH_PAYLOAD(char *pkt, unsigned int pkt_size)
 {
+    printf("\nfn : %s\n", __FUNCTION__);
+
     char *temp = calloc(1, pkt_size);
     memcpy(temp, pkt, pkt_size);
 
@@ -166,6 +168,8 @@ typedef struct vlan_ethernet_hdr_
 static inline vlan_8021q_hdr_t*
 is_pkt_vlan_tagged(ethernet_hdr_t *ethernet_hdr)
 {
+    printf("\nfn : %s\n", __FUNCTION__);
+
     vlan_8021q_hdr_t *vlan_8021q_hdr =
         (vlan_8021q_hdr_t *)((char *)ethernet_hdr + (2 * sizeof(mac_add_t)));
     
@@ -178,6 +182,8 @@ is_pkt_vlan_tagged(ethernet_hdr_t *ethernet_hdr)
 static inline unsigned int
 GET_802_1Q_VLAN_ID(vlan_8021q_hdr_t * vlan_8021q_hdr)
 {
+    printf("\nfn : %s\n", __FUNCTION__);
+
     return (unsigned int)vlan_8021q_hdr->tci_vid;
 }
 
@@ -191,6 +197,8 @@ GET_802_1Q_VLAN_ID(vlan_8021q_hdr_t * vlan_8021q_hdr)
 static inline char *
 GET_ETHERNET_HDR_PAYLOAD(ethernet_hdr_t *ethernet_hdr)
 {
+    printf("\nfn : %s\n", __FUNCTION__);
+
     vlan_8021q_hdr_t *vlan_8021q_hdr = is_pkt_vlan_tagged(ethernet_hdr);
     
     if(vlan_8021q_hdr) {
@@ -213,6 +221,8 @@ static inline void
 SET_COMMON_ETH_FCS(ethernet_hdr_t *ethernet_hdr,
                    unsigned int payload_size, unsigned int new_fcs)
 {
+    printf("\nfn : %s\n", __FUNCTION__);
+
     if(is_pkt_vlan_tagged(ethernet_hdr))
         VLAN_ETH_FCS(ethernet_hdr, payload_size) = new_fcs;
     else
@@ -223,7 +233,8 @@ SET_COMMON_ETH_FCS(ethernet_hdr_t *ethernet_hdr,
 static inline unsigned int
 GET_ETH_HDR_SIZE_EXCL_PAYLOAD(ethernet_hdr_t *ethernet_hdr)
 {
-    
+    printf("\nfn : %s\n", __FUNCTION__);
+
     if(is_pkt_vlan_tagged(ethernet_hdr)) {
         return VLAN_ETH_HDR_SIZE_EXCL_PAYLOAD;
     }
@@ -238,6 +249,8 @@ l2_frame_recv_qualify_on_interface(interface_t *interface,
                                    ethernet_hdr_t *eth_hdr,
                                    unsigned int *output_vlan_id)
 {
+    printf("\nfn : %s\n", __FUNCTION__);
+
     *output_vlan_id = 0;
     
     

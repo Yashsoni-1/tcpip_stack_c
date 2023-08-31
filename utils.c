@@ -4,6 +4,8 @@
 
 void apply_mask(char *prefix, char mask, char *str_prefix)
 {
+    printf("\nfn : %s\n", __FUNCTION__);
+
     uint32_t binary_prefix = 0;
     uint32_t subnet_mask = 0xffffffff;
     

@@ -24,6 +24,8 @@ hash_code (void *ptr, unsigned int size)
 void
 interface_assign_mac_address(interface_t *interface)
 {
+    printf("\nfn : %s\n", __FUNCTION__);
+
     node_t *node = interface->att_node;
     
     if(!node) return;
@@ -43,6 +45,8 @@ rt_table_add_direct_route(rt_table_t *rt_table, char *ip_addr, char mask);
 bool_t
 node_set_loopback_address(node_t *node, char *ip_addr)
 {
+    printf("\nfn : %s\n", __FUNCTION__);
+
     assert(ip_addr);
     
     node->node_nw_prop.is_lp_addr_config = TRUE;
@@ -59,6 +63,8 @@ bool_t node_set_intf_ip_address(node_t *node,
                                 char *ip_addr,
                                 char mask)
 {
+    printf("\nfn : %s\n", __FUNCTION__);
+
     interface_t *interface = get_node_if_by_name(node,
                                             local_if);
     if(!interface) assert(0);
@@ -88,6 +94,8 @@ bool_t node_unset_intf_ip_address(node_t *node,
 
 interface_t *node_get_matching_subnet_interface(node_t *node, char *ip_addr)
 {
+    printf("\nfn : %s\n", __FUNCTION__);
+
     interface_t *interface = NULL;
     char mask;
     char *intf_ip, intf_subnet[16], subnet2[16];
@@ -119,6 +127,8 @@ interface_t *node_get_matching_subnet_interface(node_t *node, char *ip_addr)
 
 unsigned int ip_p_to_n(char *ip_addr)
 {
+    printf("\nfn : %s\n", __FUNCTION__);
+
     uint32_t ip = 0;
     inet_pton(AF_INET, ip_addr, &ip);
     ip = htonl(ip);
@@ -127,6 +137,8 @@ unsigned int ip_p_to_n(char *ip_addr)
 
 void ip_n_to_p(unsigned int ip_addr, char *output_buffer)
 {
+    printf("\nfn : %s\n", __FUNCTION__);
+
     ip_addr = htonl(ip_addr);
     inet_ntop(AF_INET, &ip_addr, output_buffer, 16);
     output_buffer[15] = '\0';
@@ -135,6 +147,8 @@ void ip_n_to_p(unsigned int ip_addr, char *output_buffer)
 char *pkt_buffer_shift_right(char *pkt, unsigned int pkt_size,
                              unsigned int total_buffer_size)
 {
+    printf("\nfn : %s\n", __FUNCTION__);
+
     char *temp = NULL;
     
     bool_t need_temp_memory = FALSE;
@@ -163,6 +177,8 @@ char *pkt_buffer_shift_right(char *pkt, unsigned int pkt_size,
 unsigned int
 get_access_intf_operating_vlan_id(interface_t *interface)
 {
+    printf("\nfn : %s\n", __FUNCTION__);
+
     if(IF_L2_MODE(interface) != ACCESS)
         assert(0);
     
@@ -173,6 +189,8 @@ get_access_intf_operating_vlan_id(interface_t *interface)
 bool_t
 is_trunk_interface_vlan_enabled(interface_t *interface, unsigned int vlan_id)
 {
+    printf("\nfn : %s\n", __FUNCTION__);
+
     if(IF_L2_MODE(interface) != TRUNK)
         assert(0);
     
@@ -197,6 +215,8 @@ print_mac(char *heading, unsigned char *mac_address)
 
 void dump_interface(interface_t *interface)
 {
+    printf("\nfn : %s\n", __FUNCTION__);
+
     link_t *link = interface->link;
     node_t *nbr_node = get_nbr_node(interface);
     printf("  Interface Name: %s\n\tNbr Node: %s, Local Node: %s, cost = %d",
@@ -216,6 +236,8 @@ void dump_interface(interface_t *interface)
 
 void dump_node(node_t *node)
 {
+    printf("\nfn : %s\n", __FUNCTION__);
+
     interface_t *interface = NULL;
     printf("\nNode Name: %s\t UDP Port: %u\n",
            node->name,
@@ -235,6 +257,8 @@ void dump_node(node_t *node)
 
 void dump_nw_graph(graph_t *graph)
 {
+    printf("\nfn : %s\n", __FUNCTION__);
+
     glthread_t *glthread = NULL;
     node_t *node = NULL;
     interface_t *interface = NULL;
