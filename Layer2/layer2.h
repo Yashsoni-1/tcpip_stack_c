@@ -173,7 +173,7 @@ is_pkt_vlan_tagged(ethernet_hdr_t *ethernet_hdr)
     vlan_8021q_hdr_t *vlan_8021q_hdr =
         (vlan_8021q_hdr_t *)((char *)ethernet_hdr + (2 * sizeof(mac_add_t)));
     
-    if(vlan_8021q_hdr->tpid == 0x8100)
+    if(vlan_8021q_hdr->tpid == VLAN_8021Q_PROTO)
         return vlan_8021q_hdr;
     
     return NULL;
@@ -199,14 +199,11 @@ GET_ETHERNET_HDR_PAYLOAD(ethernet_hdr_t *ethernet_hdr)
 {
     printf("\nfn : %s\n", __FUNCTION__);
 
-    vlan_8021q_hdr_t *vlan_8021q_hdr = is_pkt_vlan_tagged(ethernet_hdr);
-    
-    if(vlan_8021q_hdr) {
-        vlan_ethernet_hdr_t *vlan_ethernet_hdr = (vlan_ethernet_hdr_t *)(ethernet_hdr);
-        return (char *)vlan_ethernet_hdr->payload;
+    if(is_pkt_vlan_tagged(ethernet_hdr)) {
+        return ((vlan_ethernet_hdr_t *)(ethernet_hdr))->payload;
     }
-    
-    return (char *)ethernet_hdr->payload;
+    else
+        return ethernet_hdr->payload;
 }
 
 

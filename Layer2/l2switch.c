@@ -23,7 +23,7 @@ void init_mac_table(mac_table_t **mac_table)
 {
     printf("\nfn : %s\n", __FUNCTION__);
 
-    *mac_table = calloc(1, sizeof(mac_table));
+    *mac_table = calloc(1, sizeof(mac_table_t));
     init_glthread(&((*mac_table)->mac_entries));
 }
 
@@ -56,6 +56,12 @@ delete_mac_table_entry(mac_table_t *mac_table, char *mac)
     free(mac_table_entry);
 }
 
+#define IS_MAC_TABLE_ENTRY_EQUAL(mac_entry_1, mac_entry_2)  \
+    ( \
+        strncmp(mac_entry_1->mac.mac, mac_entry_2->mac.mac, sizeof(mac_add_t)) == 0 &&\
+        strncmp(mac_entry_1->oif_name, mac_entry_2->oif_name, IF_NAME_SIZE) == 0 \
+    )
+
 bool_t mac_table_entry_add(mac_table_t *mac_table,
                            mac_table_entry_t *mac_table_entry)
 {
@@ -63,8 +69,7 @@ bool_t mac_table_entry_add(mac_table_t *mac_table,
 
     mac_table_entry_t *mac_table_entry_old = mac_table_lookup(mac_table, mac_table_entry->mac.mac);
     
-    if(mac_table_entry_old && strncmp(mac_table_entry_old->mac.mac, mac_table_entry->mac.mac, sizeof(mac_add_t)) == 0
-       && strncmp(mac_table_entry_old->oif_name, mac_table_entry->oif_name, sizeof(IF_NAME_SIZE)) == 0 ) {
+    if(mac_table_entry_old && IS_MAC_TABLE_ENTRY_EQUAL(mac_table_entry, mac_table_entry_old) ) {
         return FALSE;
     }
     
@@ -105,57 +110,12 @@ l2_switch_perform_mac_learning(node_t *node, char *src_mac, char *if_name)
     mac_table_entry_t *mac_table_entry = calloc(1, sizeof(mac_table_entry_t));
     memcpy(mac_table_entry->mac.mac, src_mac, sizeof(mac_add_t));
     strncpy(mac_table_entry->oif_name, if_name, IF_NAME_SIZE);
-    mac_table_entry->oif_name[15] = '\0';
-    bool_t result = mac_table_entry_add(node->node_nw_prop.mac_table, mac_table_entry);
+    mac_table_entry->oif_name[IF_NAME_SIZE - 1] = '\0';
+    bool_t result = mac_table_entry_add(NODE_MAC_TABLE(node), mac_table_entry);
     if(result == FALSE)
         free(mac_table_entry);
 }
 
-static void
-l2_switch_forward_frame(node_t *node, interface_t *recv_intf,
-                     char *pkt, unsigned int pkt_size)
-{
-    printf("\nfn : %s\n", __FUNCTION__);
-
-    ethernet_hdr_t *ethernet_hdr = (ethernet_hdr_t *) pkt;
-    
-    if(IS_MAC_BROADCAST(ethernet_hdr->dst_mac.mac))
-    {
-        send_pkt_flood(node, recv_intf, pkt, pkt_size);
-        return;
-    }
-    
-    mac_table_entry_t *mac_table_entry = mac_table_lookup(NODE_MAC_TABLE(node),
-                                                          ethernet_hdr->dst_mac.mac);
-    if(!mac_table_entry)
-    {
-        send_pkt_flood(node, recv_intf, pkt, pkt_size);
-        return;
-    }
-    
-    char *oif_name = mac_table_entry->oif_name;
-    interface_t *oif = get_node_if_by_name(node, oif_name);
-    if(!oif) return;
-    send_pkt_out(pkt, pkt_size, oif);
-}
-
-
-
-void
-l2_switch_recv_frame(interface_t *interface,
-                     char *pkt, unsigned int pkt_size)
-{
-    printf("\nfn : %s\n", __FUNCTION__);
-
-    node_t *node = interface->att_node;
-    ethernet_hdr_t *ethernet_hdr = (ethernet_hdr_t *) pkt;
-    
-    char *dst_mac = (char *)ethernet_hdr->dst_mac.mac;
-    char *src_mac = (char *)ethernet_hdr->src_mac.mac;
-    
-    l2_switch_perform_mac_learning(node, src_mac, interface->if_name);
-    l2_switch_forward_frame(node, interface, pkt, pkt_size);
-}
 
 
 static bool_t
@@ -173,29 +133,41 @@ l2_switch_send_pkt_out(char *pkt, unsigned int pkt_size,
     
     ethernet_hdr_t *ethernet_hdr = (ethernet_hdr_t *)pkt;
     
-    vlan_8021q_hdr_t *vlan_8021q_hdr = is_pkt_vlan_tagged((ethernet_hdr_t *)pkt);
+    vlan_8021q_hdr_t *vlan_8021q_hdr = is_pkt_vlan_tagged(ethernet_hdr);
     
     unsigned int pkt_vlan_id = 0, intf_vlan_id = 0;
     
     switch (intf_l2_mode) {
         case ACCESS:
         {
-            
             intf_vlan_id = get_access_intf_operating_vlan_id(oif);
             
-            assert(intf_vlan_id);
+            
+            if(!intf_vlan_id && !vlan_8021q_hdr) {
+                send_pkt_out(pkt, pkt_size, oif);
+                return TRUE;
+            }
+            
+            if(intf_vlan_id && !vlan_8021q_hdr) {
+                return FALSE;
+            }
             
             if(vlan_8021q_hdr &&
                     intf_vlan_id == GET_802_1Q_VLAN_ID(vlan_8021q_hdr))
             {
                 unsigned int new_pkt_size = 0;
                 
-                ethernet_hdr = untag_pkt_with_vlan_id(ethernet_hdr, pkt_size, &new_pkt_size);
+                ethernet_hdr = untag_pkt_with_vlan_id(ethernet_hdr,
+                                                      pkt_size,
+                                                      &new_pkt_size);
                 send_pkt_out((char *)ethernet_hdr, new_pkt_size, oif);
                 return TRUE;
             }
-            else
+            
+            
+            if(!intf_vlan_id && vlan_8021q_hdr) {
                 return FALSE;
+            }
         }
             break;
         case TRUNK:
@@ -204,20 +176,23 @@ l2_switch_send_pkt_out(char *pkt, unsigned int pkt_size,
                 pkt_vlan_id = GET_802_1Q_VLAN_ID(vlan_8021q_hdr);
             }
             
-            if(pkt_vlan_id && is_trunk_interface_vlan_enabled(oif, pkt_vlan_id))
+            if(pkt_vlan_id &&
+               is_trunk_interface_vlan_enabled(oif, pkt_vlan_id))
             {
-                send_pkt_out((char *)pkt, pkt_size, oif);
+                send_pkt_out(pkt, pkt_size, oif);
                 return TRUE;
             }
             
             return FALSE;
         }
             break;
-        default:
-            return FALSE;
+        case L2_MODE_UNKNOWN:
             break;
+        default:
+            ;
+        return FALSE;
     }
-   
+    
     return FALSE;
 }
 
@@ -230,20 +205,19 @@ l2_switch_flood_pkt_out(node_t *node, interface_t *exempted_intf,
     int i = 0;
     
     interface_t *oif = NULL;
-    ethernet_hdr_t *ethernet_hdr = (ethernet_hdr_t *)pkt;
-    vlan_8021q_hdr_t *vlan_8021q_hdr = is_pkt_vlan_tagged(ethernet_hdr);
-    unsigned int output_vlan_id = 0;
     
     char *pkt_copy = NULL;
     char *temp_pkt = calloc(1, MAX_PACKET_BUFFER_SIZE);
     
     pkt_copy = temp_pkt + MAX_PACKET_BUFFER_SIZE - pkt_size;
     
+    
     for(; i < MAX_INTF_PER_NODE; ++i)
     {
         oif = node->interfaces[i];
         if(!oif) break;
-        if(oif == exempted_intf || IS_INTF_L3_MODE(oif)) continue;
+        if(oif == exempted_intf ||
+           IS_INTF_L3_MODE(oif)) continue;
             
         memcpy(pkt_copy, pkt, pkt_size);
         l2_switch_send_pkt_out(pkt_copy, pkt_size, oif);
@@ -254,3 +228,50 @@ l2_switch_flood_pkt_out(node_t *node, interface_t *exempted_intf,
     return TRUE;
 }
 
+static void
+l2_switch_forward_frame(node_t *node, interface_t *recv_intf,
+                        ethernet_hdr_t *ethernet_hdr,
+                        unsigned int pkt_size)
+{
+    printf("\nfn : %s\n", __FUNCTION__);
+
+    
+    
+    if(IS_MAC_BROADCAST(ethernet_hdr->dst_mac.mac))
+    {
+        l2_switch_flood_pkt_out(node, recv_intf,
+                                (char *)ethernet_hdr, pkt_size);
+        return;
+    }
+    
+    mac_table_entry_t *mac_table_entry = mac_table_lookup(NODE_MAC_TABLE(node),
+                                                          ethernet_hdr->dst_mac.mac);
+    if(!mac_table_entry)
+    {
+        l2_switch_flood_pkt_out(node, recv_intf, (char *)ethernet_hdr, pkt_size);
+        return;
+    }
+    
+    char *oif_name = mac_table_entry->oif_name;
+    interface_t *oif = get_node_if_by_name(node, oif_name);
+    if(!oif) return;
+    
+    l2_switch_send_pkt_out((char *)ethernet_hdr, pkt_size, oif);
+}
+
+
+void
+l2_switch_recv_frame(interface_t *interface,
+                     char *pkt, unsigned int pkt_size)
+{
+    printf("\nfn : %s\n", __FUNCTION__);
+
+    node_t *node = interface->att_node;
+    ethernet_hdr_t *ethernet_hdr = (ethernet_hdr_t *) pkt;
+    
+    char *dst_mac = (char *)ethernet_hdr->dst_mac.mac;
+    char *src_mac = (char *)ethernet_hdr->src_mac.mac;
+    
+    l2_switch_perform_mac_learning(node, src_mac, interface->if_name);
+    l2_switch_forward_frame(node, interface, ethernet_hdr, pkt_size);
+}

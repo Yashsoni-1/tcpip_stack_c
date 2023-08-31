@@ -724,7 +724,10 @@ layer2_frame_recv(node_t *node, interface_t *interface,
     printf("\nfn : %s\n", __FUNCTION__);
 
     unsigned int vlan_id_to_tag = 0;
+    
     ethernet_hdr_t *ethernet_hdr = (ethernet_hdr_t *) pkt;
+    
+    
     if(l2_frame_recv_qualify_on_interface(interface,
                                           ethernet_hdr,
                                           &vlan_id_to_tag) == FALSE)
@@ -739,7 +742,8 @@ layer2_frame_recv(node_t *node, interface_t *interface,
     {
         promote_pkt_to_layer2(node, interface, ethernet_hdr, pkt_size);
     }
-    else if (IF_L2_MODE(interface) == ACCESS || IF_L2_MODE(interface) == TRUNK)
+    else if (IF_L2_MODE(interface) == ACCESS ||
+             IF_L2_MODE(interface) == TRUNK)
     {
         unsigned int new_pkt_size = 0;
         if(vlan_id_to_tag)
