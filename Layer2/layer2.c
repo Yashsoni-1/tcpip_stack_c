@@ -36,9 +36,12 @@ arp_table_lookup(arp_table_t *arp_table, char *ip_addr)
     arp_entry_t *arp_entry;
     
     ITERATE_GLTHREAD_BEGIN(&arp_table->arp_entries, curr) {
+        
         arp_entry = arp_glue_arp_entry(curr);
+        
         if (strncmp(ip_addr, arp_entry->ip_addr.ip_addr, 16) == 0)
             return arp_entry;
+        
     } ITERATE_GLTHREAD_END(&arp_table->arp_entries, curr);
     
     return NULL;
@@ -90,7 +93,6 @@ arp_table_entry_add(arp_table_t *arp_table,
                                                   arp_entry->ip_addr.ip_addr);
     
     if(!arp_entry_old) {
-        init_glthread(&arp_entry->arp_glue);
         glthread_add_next(&arp_table->arp_entries, &arp_entry->arp_glue);
         return TRUE;
     }
@@ -98,7 +100,6 @@ arp_table_entry_add(arp_table_t *arp_table,
     if(arp_entry_old &&
        IS_ARP_ENTRIES_EQUAL(arp_entry_old, arp_entry))
     {
-        delete_arp_table_entry(arp_table, arp_entry_old->ip_addr.ip_addr);
         return FALSE;
     }
     
@@ -114,7 +115,7 @@ arp_table_entry_add(arp_table_t *arp_table,
        arp_entry_sane(arp_entry_old) &&
        arp_entry_sane(arp_entry))
     {
-        if(!IS_GLTHREAD_LIST_EMPTY(&arp_entry_old->arp_pending_list))
+        if(!IS_GLTHREAD_LIST_EMPTY(&arp_entry->arp_pending_list))
         {
             glthread_add_next(&arp_entry_old->arp_pending_list,
                               arp_entry->arp_pending_list.right);
@@ -139,6 +140,8 @@ arp_table_entry_add(arp_table_t *arp_table,
         
         if(arp_pending_list) {
             *arp_pending_list = &arp_entry_old->arp_pending_list;
+            
+            return FALSE;
         }
         
         return FALSE;
@@ -156,7 +159,7 @@ pending_arp_processing_callback_function(node_t *node,
     printf("\nfn : %s\n", __FUNCTION__);
 
     ethernet_hdr_t* ethernet_hdr = (ethernet_hdr_t *)(arp_pending_entry->pkt);
-    uint32_t pkt_size = arp_pending_entry->pkt_size;
+    unsigned int pkt_size = arp_pending_entry->pkt_size;
     
     memcpy(ethernet_hdr->dst_mac.mac, arp_entry->mac_addr.mac, sizeof(mac_add_t));
     memcpy(ethernet_hdr->src_mac.mac, IF_MAC(oif), sizeof(mac_add_t));
@@ -187,6 +190,7 @@ arp_table_update_from_arp_reply(arp_table_t *arp_table,
     printf("\nfn : %s\n", __FUNCTION__);
 
     unsigned int src_ip = 0;
+    
     glthread_t *arp_pending_list = NULL;
     
     assert(arp_hdr->op_code == ARP_REPLY);
@@ -197,9 +201,11 @@ arp_table_update_from_arp_reply(arp_table_t *arp_table,
     
     ip_n_to_p(src_ip, arp_entry->ip_addr.ip_addr);
     
+    
     memcpy(arp_entry->mac_addr.mac, arp_hdr->src_mac.mac, sizeof(mac_add_t));
     
     strncpy(arp_entry->oif_name, iif->if_name, IF_NAME_SIZE);
+    
     arp_entry->oif_name[IF_NAME_SIZE - 1] = '\0';
     
     arp_entry->is_sane = FALSE;
@@ -253,10 +259,18 @@ void send_arp_broadcast_request(node_t *node, interface_t *oif, char *ip_addr)
     
     ethernet_hdr_t *ethernet_hdr = (ethernet_hdr_t *)calloc(1,
                     ETH_HDR_SIZE_EXCL_PAYLOAD + payload_size);
-    if(!oif){
+    
+    
+    if(!oif) {
         oif = node_get_matching_subnet_interface(node, ip_addr);
         if(!oif) {
             printf("Error: %s : No eligible subnet for ARP resolution for IP-address : %s\n",
+                   node->name, ip_addr);
+            return;
+        }
+        
+        if(strncmp(IF_IP(oif), ip_addr, 16) == 0) {
+            printf("Error: %s : Attempt to resolve ARP for local IP-address : %s\n",
                    node->name, ip_addr);
             return;
         }
@@ -266,18 +280,24 @@ void send_arp_broadcast_request(node_t *node, interface_t *oif, char *ip_addr)
     memcpy(ethernet_hdr->src_mac.mac, IF_MAC(oif), sizeof(mac_add_t));
     ethernet_hdr->type = ARP_MSG;
     
-    arp_hdr_t *arp_hdr = (arp_hdr_t *)ethernet_hdr->payload;
+    
+    arp_hdr_t *arp_hdr = (arp_hdr_t *)GET_ETHERNET_HDR_PAYLOAD(ethernet_hdr);
     arp_hdr->hw_type = 1;
     arp_hdr->proto_type = 0x0800;
     arp_hdr->hw_addr_len = sizeof(mac_add_t);
     arp_hdr->proto_addr_len = 4;
+    
     arp_hdr->op_code = ARP_BROAD_REQ;
+    
     memcpy(arp_hdr->src_mac.mac, IF_MAC(oif), sizeof(mac_add_t));
-    arp_hdr->src_ip = ip_p_to_n(oif->intf_nw_props.ip_add.ip_addr);
+    
+    arp_hdr->src_ip = ip_p_to_n(IF_IP(oif));
+    
     memset(arp_hdr->dest_mac.mac, 0, sizeof(mac_add_t));
+    
     arp_hdr->dest_ip = ip_p_to_n(ip_addr);
     
-    ETH_FCS(ethernet_hdr, payload_size) = 0;
+    SET_COMMON_ETH_FCS(ethernet_hdr, sizeof(arp_hdr_t), 0);
     
     send_pkt_out((char *)ethernet_hdr, ETH_HDR_SIZE_EXCL_PAYLOAD + payload_size, oif);
     
@@ -290,30 +310,43 @@ send_arp_reply_msg(ethernet_hdr_t *ethernet_hdr_in, interface_t *oif)
 {
     printf("\nfn : %s\n", __FUNCTION__);
 
-    arp_hdr_t *arp_hdr_in = (arp_hdr_t *)ethernet_hdr_in->payload;
+    arp_hdr_t *arp_hdr_in = (arp_hdr_t *)GET_ETHERNET_HDR_PAYLOAD(ethernet_hdr_in);
+    
     ethernet_hdr_t *ethernet_hdr_reply = (ethernet_hdr_t *)calloc(1, MAX_PACKET_BUFFER_SIZE);
+    
     memcpy(ethernet_hdr_reply->dst_mac.mac, ethernet_hdr_in->src_mac.mac, sizeof(mac_add_t));
+    
     memcpy(ethernet_hdr_reply->src_mac.mac, IF_MAC(oif), sizeof(mac_add_t));
     
     ethernet_hdr_reply->type = ARP_MSG;
-    arp_hdr_t *arp_hdr_reply = (arp_hdr_t *)ethernet_hdr_reply->payload;
+    
+    arp_hdr_t *arp_hdr_reply = (arp_hdr_t *)GET_ETHERNET_HDR_PAYLOAD(ethernet_hdr_reply);
+    
     arp_hdr_reply->hw_type = 1;
     arp_hdr_reply->proto_type = 0x0800;
     arp_hdr_reply->hw_addr_len = sizeof(mac_add_t);
     arp_hdr_reply->proto_addr_len = 4;
     arp_hdr_reply->op_code = ARP_REPLY;
+    
     memcpy(arp_hdr_reply->src_mac.mac, IF_MAC(oif), sizeof(mac_add_t));
+    
     arp_hdr_reply->src_ip = ip_p_to_n(IF_IP(oif));
+    
     memcpy(arp_hdr_reply->dest_mac.mac, arp_hdr_in->src_mac.mac, sizeof(mac_add_t));
+    
     arp_hdr_reply->dest_ip = arp_hdr_in->src_ip;
-    ETH_FCS(ethernet_hdr_reply, sizeof(arp_hdr_t)) = 0;
+    
+    SET_COMMON_ETH_FCS(ethernet_hdr_reply, sizeof(arp_hdr_t), 0);
     
     unsigned int total_pkt_size = ETH_HDR_SIZE_EXCL_PAYLOAD + sizeof(arp_hdr_t);
+    
+    
     char *shifted_pkt_buffer = pkt_buffer_shift_right((char *)ethernet_hdr_reply,
                                                       total_pkt_size, MAX_PACKET_BUFFER_SIZE);
+    
+    
     send_pkt_out(shifted_pkt_buffer, total_pkt_size, oif);
     free(ethernet_hdr_reply);
-    
 }
 
 
@@ -323,9 +356,11 @@ process_arp_reply_msg(node_t *node, interface_t *iif, ethernet_hdr_t *ethernet_h
     printf("\nfn : %s\n", __FUNCTION__);
 
     printf("%s : ARP reply msg recvd on interface %s of node %s\n",
-           __FUNCTION__, iif->if_name, node->name);
+           __FUNCTION__, iif->if_name, iif->att_node->name);
+    
     arp_table_update_from_arp_reply(NODE_ARP_TABLE(node),
-                                    (arp_hdr_t *)ethernet_hdr->payload, iif);
+                                    (arp_hdr_t *)GET_ETHERNET_HDR_PAYLOAD(ethernet_hdr),
+                                    iif);
 }
 
 
@@ -335,11 +370,11 @@ process_arp_broadcast_req(node_t *node, interface_t *iif, ethernet_hdr_t *ethern
     printf("\nfn : %s\n", __FUNCTION__);
 
     printf("%s : ARP Broadcast msg recvd on interface %s of node %s\n",
-           __FUNCTION__, iif->if_name, node->name);
+           __FUNCTION__, iif->if_name, iif->att_node->name);
     
     char ip_addr[16];
     
-    arp_hdr_t *arp_hdr = (arp_hdr_t *)ethernet_hdr->payload;
+    arp_hdr_t *arp_hdr = (arp_hdr_t *)GET_ETHERNET_HDR_PAYLOAD(ethernet_hdr);
     
     ip_n_to_p(arp_hdr->dest_ip, ip_addr);
     ip_addr[15] = '\0';
