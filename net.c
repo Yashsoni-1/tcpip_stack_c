@@ -232,6 +232,19 @@ void dump_interface(interface_t *interface)
         print_mac("  MAC", IF_MAC(interface));
         printf("\n");
     }
+    else
+    {
+        printf("\t l2 mode = %s", intf_l2_mode_str(IF_L2_MODE(interface)));
+        printf("\t Vlan membership : ");
+        for(int i=0; i<MAX_VLAN_MEMBERSHIP; ++i)
+        {
+            if(interface->intf_nw_props.vlans[i]) {
+                printf("%u ", interface->intf_nw_props.vlans[i]);
+            }
+        }
+        
+        printf("\n");
+    }
 }
 
 void dump_node(node_t *node)
