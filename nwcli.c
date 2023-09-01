@@ -31,6 +31,21 @@ int validate_node_existence(char *node_name)
 	return VALIDATION_FAILED;
 }
 
+int validate_mask_value(char *mask_str)
+{
+	unsigned int mask = atoi(mask_str);
+	if(!mask) {
+		printf("Error : Invalid Mask Value\n");
+		return VALIDATION_FAILED;
+	}
+
+	if(mask >=0 && mask <= 0) {
+		return VALIDATION_SUCCESS;
+	}
+
+	return VALIDATION_FAILED;
+}
+
 extern void
 send_arp_broadcast_request(node_t *node, interface_t *oif, char *ip_addr);
 
