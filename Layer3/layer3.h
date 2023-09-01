@@ -108,7 +108,12 @@ rt_table_add_route(rt_table_t *rt_table,
 
 l3_route_t *
 l3rib_lookup_lpm(rt_table_t *rt_table,
-                 uint32_t dest_ip);
+                 unsigned int dest_ip);
+
+void
+dump_rt_table(rt_table_t *rt_table);
+
+
 
 #define IS_L3_ROUTES_EQUAL(rt1, rt2) \
  ((strncmp(rt1->dest, rt2->dest, 16) == 0) && \

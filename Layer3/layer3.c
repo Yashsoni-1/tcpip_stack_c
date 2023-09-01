@@ -390,3 +390,23 @@ void promote_pkt_to_layer3(node_t *node,
     _layer3_pkt_recv_from_layer2(node, interface,
                                 pkt, pkt_size, L3_protocol_number);
 }
+
+void
+dump_rt_table(rt_table_t *rt_table)
+{
+    l3_route_t *l3_route = NULL;
+    glthread_t *curr = NULL;
+    
+    printf("L3 Routing Table:\n");
+    
+    ITERATE_GLTHREAD_BEGIN(&rt_table->route_list, curr)
+    {
+        l3_route = rt_glue_to_l3_route(curr);
+        
+        printf("\t%-18s %-4d %-18s %s\n",
+               l3_route->dest, l3_route->mask,
+               l3_route->is_direct ? "NA" : l3_route->gw_ip,
+               l3_route->is_direct ? "NA" : l3_route->oif);
+       
+    }ITERATE_GLTHREAD_END(&rt_table->route_list, curr);
+}
