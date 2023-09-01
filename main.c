@@ -14,7 +14,7 @@ graph_t *topo = NULL;
 int main(int argc, const char * argv[]) {
     
 	nw_init_cli();
-    	topo = build_dualswitch_topo();
+    	topo = build_linear_topo();
 	start_shell();
     
     return 0;
