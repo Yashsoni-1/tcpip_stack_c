@@ -405,7 +405,7 @@ dump_rt_table(rt_table_t *rt_table)
         
         printf("\t%-18s %-4d %-18s %s\n",
                l3_route->dest, l3_route->mask,
-               l3_route->is_direct ? "NA" : l3_route->gw_ip,
+               l3_route->is_direct ? "NA" : (char *)l3_route->gw_ip,
                l3_route->is_direct ? "NA" : l3_route->oif);
        
     }ITERATE_GLTHREAD_END(&rt_table->route_list, curr);
