@@ -200,7 +200,7 @@ l3_config_handler(param_t *param, ser_buff_t *tlv_buf, op_mode enable_or_disable
 				{
 					interface_t *intf;
 					if(intf_name) {
-						intf = get_node_if_by_name(intf_name);
+						intf = get_node_if_by_name(node, intf_name);
 
 						if(!intf) {
 							printf("Config Error : Non-Existing Interface : %s\n",
