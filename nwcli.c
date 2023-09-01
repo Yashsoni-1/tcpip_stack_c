@@ -162,7 +162,7 @@ l3_config_handler(param_t *param, ser_buff_t *tlv_buf, op_mode enable_or_disable
 	char *mask_str = NULL;
 	char *dest = NULL;
 
-	int CMD_CODE = -1;
+	int CMDCODE = -1;
 
 	CMDCODE = EXTRACT_CMD_CODE(tlv_buf);
 	
@@ -181,7 +181,7 @@ l3_config_handler(param_t *param, ser_buff_t *tlv_buf, op_mode enable_or_disable
 		else if(strncmp(tlv->leaf_id, "oif", strlen("oif")) == 0)
 			intf_name = tlv->value;
 		else
-			asset(0);
+			assert(0);
 		
 	} TLV_LOOP_END;
 
@@ -200,7 +200,7 @@ l3_config_handler(param_t *param, ser_buff_t *tlv_buf, op_mode enable_or_disable
 				{
 					interface_t *intf;
 					if(intf_name) {
-						intf = get_node_by_if_name(intf_name);
+						intf = get_node_if_by_name(intf_name);
 
 						if(!intf) {
 							printf("Config Error : Non-Existing Interface : %s\n",
