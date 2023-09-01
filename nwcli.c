@@ -39,7 +39,7 @@ int validate_mask_value(char *mask_str)
 		return VALIDATION_FAILED;
 	}
 
-	if(mask >=0 && mask <= 0) {
+	if(mask >=0 && mask <= 32) {
 		return VALIDATION_SUCCESS;
 	}
 
