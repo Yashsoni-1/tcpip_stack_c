@@ -249,6 +249,9 @@ show_nw_topology_handler(param_t *param, ser_buff_t *tlv_buf,
 	return 0;
 }
 
+extern void
+layer5_ping_fn(node_t *node, char *dst_ip_addr);
+
 static int 
 ping_handler(param_t *param, ser_buff_t *tlv_buf, op_mode enable_or_disable)
 {
