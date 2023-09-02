@@ -217,10 +217,8 @@ l3_config_handler(param_t *param, ser_buff_t *tlv_buf, op_mode enable_or_disable
 				}
 				break;
 				case CONFIG_DISABLE:
-				{
 					delete_rt_table_entry(NODE_RT_TABLE(node), dest, mask);	
 					break;
-				}
 				default:
 					;
 			}
@@ -248,6 +246,37 @@ show_nw_topology_handler(param_t *param, ser_buff_t *tlv_buf,
 			;
 
 	}
+	return 0;
+}
+
+static int 
+ping_handler(param_t *param, ser_buff_t *tlv_buf, op_mode enable_or_disable)
+{
+	node_t *node = NULL;
+	char *node_name;
+	char *ip_addr;
+	tlv_struct_t *tlv = NULL;
+
+	TLV_LOOP_BEGIN(tlv_buf, tlv)
+	{
+		if(strncmp(tlv->leaf_id, "node-name", strlen("node-name")) == 0)
+			node_name = tlv->value;
+		else if(strncmp(tlv->leaf_id, "ip-address", strlen("ip-address")) == 0)
+			ip_addr = tlv->value;
+		else 
+			assert(0);
+	} TLV_LOOP_END;
+
+	node = get_node_by_node_name(topo, node_name);
+	switch(CMDCODE) {
+		case CMDCODE_PING:
+		layer5_ping_fn(node, ip_addr);
+			break;
+		default:
+			;
+
+	}
+
 	return 0;
 }
 
@@ -285,6 +314,22 @@ void nw_init_cli()
 					"Node Name");
 			libcli_register_param(&node, &node_name);
 
+			{
+				static param_t ping;
+                		init_param(&ping, CMD, "ping", 0,
+                                		0, INVALID, 0, "PING Utility");
+                		libcli_register_param(&node_name, &ping);
+				{
+					static param_t ip_addr;
+			                init_param(&ip_addr, LEAF, 0, ping_handler,
+                        			        0, IPV4,
+						       	"ip-address",
+						       	"IPv4 Address");
+             			  	libcli_register_param(&ping, &ip_addr);
+                			set_param_cmd_code(&ip_addr, CMDCODE_PING);
+				}
+			}
+
 
 			{
 				static param_t resolve_arp;
@@ -303,7 +348,6 @@ void nw_init_cli()
                 			set_param_cmd_code(&ip_addr, CMDCODE_RUN_ARP);
 
 				}
-		
 			}
 		}
         }
