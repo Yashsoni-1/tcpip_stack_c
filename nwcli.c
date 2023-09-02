@@ -260,6 +260,9 @@ ping_handler(param_t *param, ser_buff_t *tlv_buf, op_mode enable_or_disable)
 	char *ip_addr;
 	tlv_struct_t *tlv = NULL;
 
+	int CMDCODE = -1;
+	CMDCODE = EXTRACT_CMD_CODE(tlv_buf);
+
 	TLV_LOOP_BEGIN(tlv_buf, tlv)
 	{
 		if(strncmp(tlv->leaf_id, "node-name", strlen("node-name")) == 0)
