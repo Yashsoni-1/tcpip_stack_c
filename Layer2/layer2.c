@@ -184,8 +184,8 @@ process_arp_pending_entry(node_t *node,
 
 void
 arp_table_update_from_arp_reply(arp_table_t *arp_table,
-                                     arp_hdr_t *arp_hdr,
-                                     interface_t *iif)
+                                 arp_hdr_t *arp_hdr,
+                                 interface_t *iif)
 {
     printf("\nfn : %s\n", __FUNCTION__);
 
@@ -197,10 +197,7 @@ arp_table_update_from_arp_reply(arp_table_t *arp_table,
     
     arp_entry_t *arp_entry = calloc(1, sizeof(arp_entry_t));
     
-    src_ip = htonl(arp_hdr->src_ip);
-    
-    ip_n_to_p(src_ip, arp_entry->ip_addr.ip_addr);
-    
+    ip_n_to_p(arp_hdr->src_ip, arp_entry->ip_addr.ip_addr);
     
     memcpy(arp_entry->mac_addr.mac, arp_hdr->src_mac.mac, sizeof(mac_add_t));
     
@@ -358,6 +355,7 @@ process_arp_reply_msg(node_t *node, interface_t *iif, ethernet_hdr_t *ethernet_h
     printf("%s : ARP reply msg recvd on interface %s of node %s\n",
            __FUNCTION__, iif->if_name, iif->att_node->name);
     
+    
     arp_table_update_from_arp_reply(NODE_ARP_TABLE(node),
                                     (arp_hdr_t *)GET_ETHERNET_HDR_PAYLOAD(ethernet_hdr),
                                     iif);
@@ -398,7 +396,7 @@ add_arp_pending_entry(arp_entry_t *arp_entry,
     printf("\nfn : %s\n", __FUNCTION__);
 
     arp_pending_entry_t *arp_pending_entry =
-    calloc(1, sizeof(arp_pending_entry) + pkt_size);
+    calloc(1, sizeof(arp_pending_entry_t) + pkt_size);
     
     init_glthread(&arp_pending_entry->arp_pending_entry_glue);
     arp_pending_entry->cb = cb;
