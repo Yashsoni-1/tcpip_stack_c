@@ -57,7 +57,7 @@ layer3_ero_ping_fn(node_t *node, char *dst_ip_addr, char *ero_ip_addr)
     
     l3_route_t *l3_route = l3rib_lookup_lpm(NODE_RT_TABLE(node), ip_hdr_in->dst_ip);
     char ip_address[16];
-    ip_n_to_p(dst_ip_addr, ip_address);
+    ip_n_to_p(ip_hdr_in->dst_ip, ip_address);
     if(!l3_route)
     {
         printf("Router %s : Cannot Route IP : %s\n",
