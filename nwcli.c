@@ -252,12 +252,16 @@ show_nw_topology_handler(param_t *param, ser_buff_t *tlv_buf,
 extern void
 layer5_ping_fn(node_t *node, char *dst_ip_addr);
 
+extern void
+layer3_ero_ping_fn(node_t *node, char *ip_addr, char *ero_ip_addr);
+
 static int 
 ping_handler(param_t *param, ser_buff_t *tlv_buf, op_mode enable_or_disable)
 {
 	node_t *node = NULL;
 	char *node_name;
-	char *ip_addr;
+	char *ip_addr, 
+	     *ero_ip_addr;
 	tlv_struct_t *tlv = NULL;
 
 	int CMDCODE = -1;
@@ -269,6 +273,8 @@ ping_handler(param_t *param, ser_buff_t *tlv_buf, op_mode enable_or_disable)
 			node_name = tlv->value;
 		else if(strncmp(tlv->leaf_id, "ip-address", strlen("ip-address")) == 0)
 			ip_addr = tlv->value;
+		else if(strncmp(tlv->leaf_id, "ero-ip-address", strlen("ero-ip-address")) == 0)
+			ero_ip_addr = tlv->value;			
 		else 
 			assert(0);
 	} TLV_LOOP_END;
@@ -278,9 +284,10 @@ ping_handler(param_t *param, ser_buff_t *tlv_buf, op_mode enable_or_disable)
 		case CMDCODE_PING:
 		layer5_ping_fn(node, ip_addr);
 			break;
+		case CMDCODE_ERO_PING:
+		layer3_ero_ping_fn(node, ip_addr, ero_ip_addr);
 		default:
 			;
-
 	}
 
 	return 0;
