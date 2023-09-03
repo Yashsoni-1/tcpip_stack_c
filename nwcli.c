@@ -332,7 +332,22 @@ void nw_init_cli()
 						       	"ip-address",
 						       	"IPv4 Address");
              			  	libcli_register_param(&ping, &ip_addr);
-                			set_param_cmd_code(&ip_addr, CMDCODE_PING);
+                			set_param_cmd_code(&ip_addr, CMDCODE_PING); 
+					{
+						static param_t ero;
+                				init_param(&ero, CMD, "ero", 0,
+                                				0, INVALID, 0, "ERO(Explicit Route Object)");
+                				libcli_register_param(&ip_addr, &ero);
+						{
+							static param_t ero_ip_addr;
+					                init_param(&ero_ip_addr, LEAF, 0, ping_handler,
+		                        			        0, IPV4,
+								       	"ero-ip-address",
+								       	"ERO IPv4 Address");
+		             			  	libcli_register_param(&ero, &ero_ip_addr);
+		                			set_param_cmd_code(&ero_ip_addr, CMDCODE_ERO_PING);
+						}
+					}
 				}
 			}
 
