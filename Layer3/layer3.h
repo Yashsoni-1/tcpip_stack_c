@@ -80,18 +80,17 @@ typedef struct rt_table_
 GLTHREAD_TO_STRUCT(rt_glue_to_l3_route, l3_route_t, rt_glue);
 
 
-#define IP_HDR_LEN_IN_BYTES(ip_hdr_ptr) \
-    (ip_hdr_ptr->ihl * 4)
+#define IP_HDR_LEN_IN_BYTES(ip_hdr_ptr)     (ip_hdr_ptr->ihl * 4)
 #define IP_HDR_TOTAL_LEN_IN_BYTES(ip_hdr_ptr) \
     (ip_hdr_ptr->total_length * 4)
 
 #define INCREMENT_IPHDR(ip_hdr_ptr) \
     ((char *)ip_hdr_ptr + (ip_hdr_ptr->ihl * 4))
 
-
 #define IP_HDR_PAYLOAD_SIZE(ip_hdr_ptr) \
     (IP_HDR_TOTAL_LEN_IN_BYTES(ip_hdr_ptr) - \
     IP_HDR_LEN_IN_BYTES(ip_hdr_ptr))
+
 
 
 void

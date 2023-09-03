@@ -336,6 +336,15 @@ layer3_ip_pkt_recv_from_layer2(node_t *node,
                 case ICMP_PRO:
                     printf("IP Address : %s, ping success\n", dst_ip_add);
                     break;
+                case IP_IN_IP:{
+                    printf("Recvd IP in IP pkt on node : %s\n", node->name);
+                    
+                    layer3_ip_pkt_recv_from_layer2(node, interface,
+                                                   (ip_hdr_t *)INCREMENT_IPHDR(ip_hdr),
+                                                   IP_HDR_PAYLOAD_SIZE(ip_hdr));
+                    
+                    return;
+                }
                 default:
                     ;
             }
