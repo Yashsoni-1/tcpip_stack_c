@@ -6,5 +6,5 @@
 #define CMDCODE_SHOW_NODE_RT_TABLE     9
 #define CMDCODE_CONF_NODE_L3ROUTE     10
 #define CMDCODE_ERO_PING              11
-
+#define CMDCODE_SHOW_INTF_STATS       13
 #define CMDCODE_CONF_INTF_UP_DOWN     26
