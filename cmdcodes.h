@@ -7,3 +7,4 @@
 #define CMDCODE_CONF_NODE_L3ROUTE     10
 #define CMDCODE_ERO_PING              11
 
+#define CMDCODE_INTF_UP_DOWN          26
