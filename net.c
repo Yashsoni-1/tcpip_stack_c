@@ -217,7 +217,7 @@ void dump_interface(interface_t *interface)
 {
     printf("\nfn : %s\n", __FUNCTION__);
 
-    link_t *link = interface->link;
+    
     node_t *nbr_node = get_nbr_node(interface);
     printf("  Interface Name: %s\n\tNbr Node: %s, Local Node: %s, cost = %d",
            interface->if_name,
@@ -268,17 +268,29 @@ void dump_node(node_t *node)
     }
 }
 
-void dump_nw_graph(graph_t *graph)
+void
+dump_nw_graph(graph_t *graph, node_t *node1)
 {
     printf("\nfn : %s\n", __FUNCTION__);
 
-    glthread_t *glthread = NULL;
+    glthread_t *curr = NULL;
     node_t *node = NULL;
-    interface_t *interface = NULL;
-    unsigned int i;
+    interface_t *interface;
+    int i;
+    
     printf("Topology Name: %s\n\n", graph->topology_name);
-    ITERATE_GLTHREAD_BEGIN(&graph->node_list, glthread) {
-        node = graph_glue_to_node(glthread);
-        dump_node(node);
-    } ITERATE_GLTHREAD_END(&graph->node_list, glthread);
+    
+    if(!node1)
+    {
+        ITERATE_GLTHREAD_BEGIN(&graph->node_list, curr)
+        {
+            node = graph_glue_to_node(curr);
+            dump_node(node);
+        } ITERATE_GLTHREAD_END(&graph->node_list, curr);
+    }
+    else
+    {
+        dump_node(node1);
+    }
+    
 }
