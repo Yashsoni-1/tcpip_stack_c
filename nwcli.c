@@ -6,6 +6,43 @@
 
 extern graph_t *topo;
 
+extern void 
+dump_node_interface_stats(node_t *node);
+
+static int 
+show_intf_handler(param_t *param, ser_buff_t *tlv_buf, op_mode enable_or_disable)
+{
+	node_t *node;
+	char *node_name;
+	
+	tlv_struct_t *tlv = NULL;
+	int CMDCODE = -1;
+
+	CMDCODE = EXTRACT_CMD_CODE(tlv_buf);
+	
+	TLV_LOOP_BEGIN(tlv_buf, tlv) 
+	{
+		if(strncmp(tlv->leaf_id, "node-name", strlen("node-name")) == 0)
+			node_name = tlv->value;
+		
+	}TLV_LOOP_END;
+
+	node = get_node_by_node_name(topo, node_name);
+
+	switch(CMDCODE) {
+		
+		case CMDCODE_SHOW_INTF_STATS:
+			dump_node_interface_stats(node);
+			break;
+		default:
+			;
+	}
+	
+	return 0;
+}
+
+
+
 static void 
 display_node_interfaces(param_t *param, ser_buff_t *tlv_buf)
 {
@@ -524,6 +561,21 @@ void nw_init_cli()
 			init_param(&node_name, LEAF, NULL, NULL, validate_node_existence, STRING, "node-name", 
 					"Node Name");
 			libcli_register_param(&node, &node_name);
+			{
+				static param_t interface;
+				init_param(&interface, CMD, "interface", 0,
+				0, INVALID, 0, "\"Interface\" keyword");
+				libcli_register_display_callback(&interface, display_node_interfaces);
+				libcli_register_param(&node_name, &interface);
+
+				{
+					static param_t stats;
+					init_param(&stats, CMD, "statistics", show_interface_handler,
+									0, INVALID, 0, "Interface Statistics");
+					libcli_register_param(&interface, &stats);
+					set_param_cmd_code(&stats, CMDCODE_SHOW_INTF_STATS);
+				}
+			}
 
 			{
 				static param_t arp;
@@ -569,7 +621,7 @@ void nw_init_cli()
 				init_param(&interface, CMD, "interface", 0,
 				0, INVALID, 0, "\"Interface\" keyword");
 				libcli_register_display_callback(&interface, display_node_interfaces);
-				libcli_register_param(&node, &interface);
+				libcli_register_param(&node_name, &interface);
 				{
 					static param_t if_name;
 					init_param(&if_name, LEAF, 0, 0,
