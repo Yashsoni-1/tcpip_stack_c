@@ -434,6 +434,26 @@ void nw_init_cli()
 			init_param(&node_name, LEAF, 0, 0, validate_node_existence, STRING, "node-name", 
 					"Node Name");
 			libcli_register_param(&node, &node_name);
+			{
+				static param_t interface;
+				init_param(&interface, CMD, "interface", 0,
+				0, INVALID, 0, "\"Interface\" keyword");
+				libcli_register_param(&node, &interface);
+				{
+					static param_t if_name;
+					init_param(&if_name, LEAF, 0, 0,
+					validate_intf_existence, STRING, "intf-name", "Interface Name");
+					libcli_register_param(&node_name, &if_name);
+					{
+						static param_t if_up_down;
+						init_param(&if_up_down, LEAF, 0, intf_conf_handler,
+						0, STRING, "intf-up-down", "Choice UP DOWN");
+						libcli_register_param(&if_name, &if_up_down);
+						set_param_cmd_code(&if_up_down, CMDCODE_INTF_UP_DOWN);
+						
+					}
+				}
+			}
 
 			{
 				static param_t route;
