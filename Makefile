@@ -1,6 +1,6 @@
 CC=gcc
 CFLAGS=-g
-TARGET:test.exe CommandParser/libcli.a 
+TARGET:tcpstack.exe CommandParser/libcli.a 
 LIBS=-lpthread -L ./CommandParser -lcli -lrt
 
 OBJS=gl_thread/gl_thread.o \
@@ -25,8 +25,8 @@ pkt_gen.o:pkt_gen.c
 	${CC} ${CFLAGS} -c pkt_gen.c -o pkt_gen.o
 
 
-test.exe:main.o ${OBJS} CommandParser/libcli.a
-	${CC} ${CFLAGS} main.o ${OBJS} -o test.exe ${LIBS}
+tcpstack.exe:main.o ${OBJS} CommandParser/libcli.a
+	${CC} ${CFLAGS} main.o ${OBJS} -o tcpstack.exe ${LIBS}
     
     
 main.o:main.c
