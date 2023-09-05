@@ -10,7 +10,7 @@ extern void
 dump_node_interface_stats(node_t *node);
 
 static int 
-show_intf_handler(param_t *param, ser_buff_t *tlv_buf, op_mode enable_or_disable)
+show_interface_handler(param_t *param, ser_buff_t *tlv_buf, op_mode enable_or_disable)
 {
 	node_t *node;
 	char *node_name;
@@ -61,7 +61,7 @@ display_node_interfaces(param_t *param, ser_buff_t *tlv_buf)
 	if(!node_name)
 		return;
 
-	node = get_node_by_node_name(node_name);
+	node = get_node_by_node_name(topo, node_name);
 
 	int i=0;
 
@@ -146,6 +146,25 @@ display_graph_node(param_t *param, ser_buff_t *tlv_buf)
 		printf("%s\n", node->name);
 
 	} ITERATE_GLTHREAD_END(&topo->node_list, curr);
+}
+
+static int
+validate_if_down_status(char *value)
+{
+	if((strncmp(value, "up", strlen("up")) == 0) &&
+		strlen("up") == strlen(value))
+	{
+		return VALIDATION_SUCCESS;
+	}
+	else if(strncmp(value, "down", strlen("down")) == 0 &&
+		strlen("down") == strlen(value))
+	{
+		return VALIDATION_SUCCESS;
+	}
+	else 
+	{
+		return VALIDATION_FAILED;
+	}
 }
 
 static int 
