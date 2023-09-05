@@ -149,7 +149,7 @@ display_graph_node(param_t *param, ser_buff_t *tlv_buf)
 }
 
 static int
-validate_if_down_status(char *value)
+validate_if_up_down_status(char *value)
 {
 	if((strncmp(value, "up", strlen("up")) == 0) &&
 		strlen("up") == strlen(value))
