@@ -5,6 +5,7 @@
 #include <memory.h>
 #include "utils.h"
 #include "tcpconst.h"
+#include <stdint.h>
 
 
 typedef struct graph_ graph_t;
