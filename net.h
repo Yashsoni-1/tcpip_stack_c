@@ -84,6 +84,8 @@ intf_l2_mode_str(intf_l2_mode_t intf_l2_mode)
 
 typedef struct intf_nw_props_
 {
+    bool_t is_up;
+    
     mac_add_t mac_add;
     
     intf_l2_mode_t intf_l2_mode;
@@ -93,6 +95,9 @@ typedef struct intf_nw_props_
     bool_t is_ipaddr_config;
     ip_add_t ip_add;
     
+    uint32_t pkt_recv;
+    uint32_t pkt_sent;
+    
     char mask;
 
 } intf_nw_props_t;
@@ -100,6 +105,8 @@ typedef struct intf_nw_props_
 static inline void
 init_intf_nw_prop(intf_nw_props_t *intf_nw_prop)
 {
+    intf_nw_prop->is_up = TRUE;
+    
     memset(intf_nw_prop->mac_add.mac, 0,
            sizeof(intf_nw_prop->mac_add.mac));
     
@@ -107,14 +114,17 @@ init_intf_nw_prop(intf_nw_props_t *intf_nw_prop)
     
     memset(intf_nw_prop->vlans, 0, sizeof(intf_nw_prop->vlans));
     
-    
     intf_nw_prop->is_ipaddr_config = FALSE;
     memset(intf_nw_prop->ip_add.ip_addr, 0, 16);
     intf_nw_prop->mask = 0;
+    
+    intf_nw_prop->pkt_sent = 0;
+    intf_nw_prop->pkt_recv = 0;
 }
 
 #define IF_MAC(intf_ptr) (intf_ptr->intf_nw_props.mac_add.mac)
 #define IF_IP(intf_ptr) (intf_ptr->intf_nw_props.ip_add.ip_addr)
+#define IF_IS_UP(intf_ptr) ((intf_ptr)->intf_nw_props.is_up == TRUE)
 
 #define NODE_LO_ADD(node_ptr) (node_ptr->node_nw_prop.lp_addr.ip_addr)
 #define NODE_ARP_TABLE(node_ptr)  (node_ptr->node_nw_prop.arp_table)
@@ -137,29 +147,30 @@ interface_t *node_get_matching_subnet_interface(node_t *node,
 unsigned int
 ip_p_to_n(char *ip_addr);
 
-void
+char *
 ip_n_to_p(unsigned int ip_addr,
-                                char *output_buffer);
+          char *output_buffer);
 
 
 char*
 pkt_buffer_shift_right(char *pkt, unsigned int pkt_size,
-                             unsigned int total_buffer_size);
-
+                      unsigned int total_buffer_size);
 
 unsigned int
 get_access_intf_operating_vlan_id(interface_t *interface);
 
 
 bool_t
-is_trunk_interface_vlan_enabled(interface_t *interface, unsigned int vlan_id);
+is_trunk_interface_vlan_enabled(interface_t *interface,
+                                unsigned int vlan_id);
 
 
 
 void dump_nw_graph(graph_t *graph, node_t *node1);
 void dump_interface(interface_t *interface);
 void dump_node(node_t *node);
-
+void dump_node_interface_stats(node_t *node);
+void dump_interface_stats(interface_t *interface);
 void print_mac(char *heading, unsigned char *mac_address);
 
 #endif /* net_h */

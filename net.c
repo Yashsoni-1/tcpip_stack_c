@@ -58,7 +58,8 @@ node_set_loopback_address(node_t *node, char *ip_addr)
     return TRUE;
 }
 
-bool_t node_set_intf_ip_address(node_t *node,
+bool_t
+node_set_intf_ip_address(node_t *node,
                                 char *local_if,
                                 char *ip_addr,
                                 char mask)
@@ -80,7 +81,8 @@ bool_t node_set_intf_ip_address(node_t *node,
     return TRUE;
 }
 
-bool_t node_unset_intf_ip_address(node_t *node,
+bool_t
+node_unset_intf_ip_address(node_t *node,
                                   char *local_if)
 {
     interface_t *interface = get_node_if_by_name(node,
@@ -92,7 +94,8 @@ bool_t node_unset_intf_ip_address(node_t *node,
     return TRUE;
 }
 
-interface_t *node_get_matching_subnet_interface(node_t *node, char *ip_addr)
+interface_t *
+node_get_matching_subnet_interface(node_t *node, char *ip_addr)
 {
     printf("\nfn : %s\n", __FUNCTION__);
 
@@ -125,7 +128,8 @@ interface_t *node_get_matching_subnet_interface(node_t *node, char *ip_addr)
     return NULL;
 }
 
-unsigned int ip_p_to_n(char *ip_addr)
+unsigned int
+ip_p_to_n(char *ip_addr)
 {
     printf("\nfn : %s\n", __FUNCTION__);
 
@@ -135,16 +139,28 @@ unsigned int ip_p_to_n(char *ip_addr)
     return ip;
 }
 
-void ip_n_to_p(unsigned int ip_addr, char *output_buffer)
+char *
+ip_n_to_p(unsigned int ip_addr, char *output_buffer)
 {
     printf("\nfn : %s\n", __FUNCTION__);
+    
+    char *out = NULL;
+    
+    static char str_ip[16];
+    
+    out = !output_buffer ? str_ip : output_buffer;
+    
+    memset(out, 0, 16);
 
     ip_addr = htonl(ip_addr);
-    inet_ntop(AF_INET, &ip_addr, output_buffer, 16);
-    output_buffer[15] = '\0';
+    inet_ntop(AF_INET, &ip_addr, out, 16);
+    out[15] = '\0';
+    
+    return out;
 }
 
-char *pkt_buffer_shift_right(char *pkt, unsigned int pkt_size,
+char *
+pkt_buffer_shift_right(char *pkt, unsigned int pkt_size,
                              unsigned int total_buffer_size)
 {
     printf("\nfn : %s\n", __FUNCTION__);
@@ -213,7 +229,8 @@ print_mac(char *heading, unsigned char *mac_address)
            mac_address[4], mac_address[5]);
 }
 
-void dump_interface(interface_t *interface)
+void
+dump_interface(interface_t *interface)
 {
     printf("\nfn : %s\n", __FUNCTION__);
 
@@ -292,5 +309,30 @@ dump_nw_graph(graph_t *graph, node_t *node1)
     {
         dump_node(node1);
     }
+}
+
+void
+dump_interface_stats(interface_t *interface)
+{
+    printf("%s    :: PktTx : %u, PktRx : %u",
+           interface->if_name,
+           interface->intf_nw_props.pkt_sent,
+           interface->intf_nw_props.pkt_recv);
+}
+
+void
+dump_node_interface_stats(node_t *node)
+{
+    interface_t *intf;
     
+    int i = 0;
+    
+    for(; i < MAX_INTF_PER_NODE; ++i)
+    {
+        intf = node->interfaces[i];
+        if(!intf) return;
+        
+        dump_interface_stats(intf);
+        printf("\n");
+    }
 }

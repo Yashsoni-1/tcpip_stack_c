@@ -99,6 +99,12 @@ _pkt_receive(node_t *receiving_node,
         return;
     }
     
+    if(!IF_IS_UP(recv_intf)) {
+        return;
+    }
+    
+    recv_intf->intf_nw_props.pkt_recv++;
+    
     pkt_receive(receiving_node, recv_intf,
                 pkt_with_aux_data + IF_NAME_SIZE,
                 pkt_size - IF_NAME_SIZE);
@@ -178,7 +184,8 @@ network_start_pkt_receiver_thread(graph_t *topo)
 }
 
 
-int send_pkt_out(char *pkt, unsigned int pkt_size,
+int
+send_pkt_out(char *pkt, unsigned int pkt_size,
                  interface_t *interface)
 {
     printf("\nfn : %s\n", __FUNCTION__);
@@ -186,6 +193,10 @@ int send_pkt_out(char *pkt, unsigned int pkt_size,
     int rc = 0;
     node_t *sending_node = interface->att_node;
     node_t *nbr_node = get_nbr_node(interface);
+    
+    if(!IF_IS_UP(interface)) {
+        return 0;
+    }
     
     if(!nbr_node) return -1;
     
@@ -220,6 +231,14 @@ int send_pkt_out(char *pkt, unsigned int pkt_size,
     
     rc = _send_pkt_out(sock, pkt_with_aux_data, pkt_size + IF_NAME_SIZE,
                        dst_udp_port_no);
+    
+    if(rc > 0) {
+        interface->intf_nw_props.pkt_sent++;
+    }
+    else {
+        printf("Error : pkt send failed on node %s, error code = %d \n",
+               sending_node->name, errno);
+    }
     close(sock);
     return rc;
 }
