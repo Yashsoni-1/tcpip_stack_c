@@ -1,0 +1,8 @@
+
+SQUARE TOPO
+config node R1 route 122.1.1.2 32 10.1.1.2 eth0/0
+config node R1 route 122.1.1.3 32 10.1.1.2 eth0/0
+config node R1 route 122.1.1.4 32 40.1.1.1 eth0/7
+config node R2 route 122.1.1.3 32 20.1.1.2 eth0/2
+
+run node R1 ping 122.1.1.3
