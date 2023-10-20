@@ -168,7 +168,9 @@ is_trunk_interface_vlan_enabled(interface_t *interface,
 
 
 void dump_nw_graph(graph_t *graph, node_t *node1);
+void dump_intf_props(interface_t *intf);
 void dump_interface(interface_t *interface);
+void dump_node_nw_props(node_t *node);
 void dump_node(node_t *node);
 void dump_node_interface_stats(node_t *node);
 void dump_interface_stats(interface_t *interface);
