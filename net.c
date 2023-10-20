@@ -211,16 +211,10 @@ print_mac(char *heading, unsigned char *mac_address)
            mac_address[4], mac_address[5]);
 }
 
-void
-dump_interface(interface_t *interface)
+void dump_intf_props(interface_t *interface)
 {
-    node_t *nbr_node = get_nbr_node(interface);
-    printf("  Interface Name: %s\n\tNbr Node: %s, Local Node: %s, cost = %d",
-           interface->if_name,
-           nbr_node->name,
-           interface->att_node->name,
-           interface->link->cost);
-   
+    printf("\t IF Status : %s\n", IF_IS_UP(interface) ? "UP" : "DOWN");
+    
     if(interface->intf_nw_props.is_ipaddr_config) {
         printf("  IP addr : %s/%d",
                IF_IP(interface),
@@ -243,13 +237,23 @@ dump_interface(interface_t *interface)
     }
 }
 
-void dump_node(node_t *node)
+void
+dump_interface(interface_t *interface)
 {
-    interface_t *interface = NULL;
-    printf("\nNode Name: %s\t UDP Port: %u\n",
-           node->name,
-           node->udp_port_number);
-    
+    node_t *nbr_node = get_nbr_node(interface);
+    printf("  Interface Name: %s\n\tNbr Node: %s, Local Node: %s, cost = %d",
+           interface->if_name,
+           nbr_node->name,
+           interface->att_node->name,
+           interface->link->cost);
+   
+    dump_intf_props(interface);
+}
+
+void dump_node_nw_props(node_t *node)
+{
+     interface_t *interface = NULL;
+
     if(node->node_nw_prop.is_lp_addr_config)
         printf("\t\tLo addr: %s/32\n", node->node_nw_prop.lp_addr.ip_addr);
     for(int i=0; i < MAX_INTF_PER_NODE; ++i)
@@ -260,6 +264,15 @@ void dump_node(node_t *node)
         else
             break;
     }
+}
+
+void dump_node(node_t *node)
+{
+    printf("\nNode Name: %s\t UDP Port: %u\n",
+           node->name,
+           node->udp_port_number);
+
+    dump_node_nw_props(node);
 }
 
 void
