@@ -42,8 +42,6 @@ typedef struct ethernet_hdr_
 static inline ethernet_hdr_t*
 ALLOC_ETH_HDR_WITH_PAYLOAD(char *pkt, unsigned int pkt_size)
 {
-    printf("\nfn : %s\n", __FUNCTION__);
-
     char *temp = calloc(1, pkt_size);
     memcpy(temp, pkt, pkt_size);
 
@@ -54,8 +52,6 @@ ALLOC_ETH_HDR_WITH_PAYLOAD(char *pkt, unsigned int pkt_size)
     free(temp);
     return eth_hdr;
 }
-
-
 
 typedef struct arp_table_ {
     glthread_t arp_entries;
@@ -107,9 +103,6 @@ bool_t
 arp_table_entry_add(arp_table_t *arp_table,
                     arp_entry_t *arp_entry,
                     glthread_t **arp_pending_list);
-
-
-
 
 arp_entry_t *arp_table_lookup(arp_table_t *arp_table, char *ip_addr);
 
@@ -168,8 +161,6 @@ typedef struct vlan_ethernet_hdr_
 static inline vlan_8021q_hdr_t*
 is_pkt_vlan_tagged(ethernet_hdr_t *ethernet_hdr)
 {
-    printf("\nfn : %s\n", __FUNCTION__);
-
     vlan_8021q_hdr_t *vlan_8021q_hdr =
         (vlan_8021q_hdr_t *)((char *)ethernet_hdr + (2 * sizeof(mac_add_t)));
     
@@ -182,11 +173,8 @@ is_pkt_vlan_tagged(ethernet_hdr_t *ethernet_hdr)
 static inline unsigned int
 GET_802_1Q_VLAN_ID(vlan_8021q_hdr_t * vlan_8021q_hdr)
 {
-    printf("\nfn : %s\n", __FUNCTION__);
-
     return (unsigned int)vlan_8021q_hdr->tci_vid;
 }
-
 
 #define VLAN_ETH_FCS(vlan_eth_hdr_ptr, payload_size) \
 (*(unsigned int *)(((char *)(((vlan_ethernet_hdr_t *)vlan_eth_hdr_ptr)->payload) + payload_size)))
@@ -197,8 +185,6 @@ GET_802_1Q_VLAN_ID(vlan_8021q_hdr_t * vlan_8021q_hdr)
 static inline char *
 GET_ETHERNET_HDR_PAYLOAD(ethernet_hdr_t *ethernet_hdr)
 {
-    printf("\nfn : %s\n", __FUNCTION__);
-
     if(is_pkt_vlan_tagged(ethernet_hdr)) {
         return ((vlan_ethernet_hdr_t *)(ethernet_hdr))->payload;
     }
@@ -206,32 +192,23 @@ GET_ETHERNET_HDR_PAYLOAD(ethernet_hdr_t *ethernet_hdr)
         return ethernet_hdr->payload;
 }
 
-
-
 #define GET_COMMON_ETH_FCS(eth_hdr_ptr, payload_size) \
     (is_pkt_vlan_tagged(eth_hdr_ptr) ? VLAN_ETH_FCS(eth_hdr_ptr, payload_size) : \
     ETH_FCS(eth_hdr_ptr, payload_size))
-
-
 
 static inline void
 SET_COMMON_ETH_FCS(ethernet_hdr_t *ethernet_hdr,
                    unsigned int payload_size, unsigned int new_fcs)
 {
-    printf("\nfn : %s\n", __FUNCTION__);
-
     if(is_pkt_vlan_tagged(ethernet_hdr))
         VLAN_ETH_FCS(ethernet_hdr, payload_size) = new_fcs;
     else
         ETH_FCS(ethernet_hdr, payload_size) = new_fcs;
 }
 
-
 static inline unsigned int
 GET_ETH_HDR_SIZE_EXCL_PAYLOAD(ethernet_hdr_t *ethernet_hdr)
 {
-    printf("\nfn : %s\n", __FUNCTION__);
-
     if(is_pkt_vlan_tagged(ethernet_hdr)) {
         return VLAN_ETH_HDR_SIZE_EXCL_PAYLOAD;
     }
@@ -239,20 +216,13 @@ GET_ETH_HDR_SIZE_EXCL_PAYLOAD(ethernet_hdr_t *ethernet_hdr)
         return ETH_HDR_SIZE_EXCL_PAYLOAD;
 }
 
-
-
 static inline bool_t
 l2_frame_recv_qualify_on_interface(interface_t *interface,
                                    ethernet_hdr_t *eth_hdr,
                                    unsigned int *output_vlan_id)
 {
-    printf("\nfn : %s\n", __FUNCTION__);
-
     *output_vlan_id = 0;
-    
-    
     vlan_8021q_hdr_t *vlan_8021q_hdr = is_pkt_vlan_tagged(eth_hdr);
-    
     
     if(!(IS_INTF_L3_MODE(interface)) && IF_L2_MODE(interface) == L2_MODE_UNKNOWN)
         return FALSE;
@@ -262,7 +232,6 @@ l2_frame_recv_qualify_on_interface(interface_t *interface,
     {
         return FALSE;
     }
-    
     
     unsigned int intf_vlan_id = 0, pkt_vlan_id = 0;
     
@@ -310,7 +279,6 @@ l2_frame_recv_qualify_on_interface(interface_t *interface,
     {
         return TRUE;
     }
-    
     
     if(IS_INTF_L3_MODE(interface) &&
             IS_MAC_BROADCAST(eth_hdr->dst_mac.mac))
