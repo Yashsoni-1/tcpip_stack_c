@@ -1,16 +1,7 @@
-//
-//  layer3.c
-//  tcp_ip_stack_c
-//
-//  Created by Yash soni on 19/08/23.
-//
-
 #include "layer3.h"
 #include <arpa/inet.h>
 #include <assert.h>
 #include "comm.h"
-
-
 
 extern void
 demote_pkt_to_layer2(node_t *node,
@@ -29,8 +20,6 @@ l3_is_direct_route(l3_route_t *l3_route)
 bool_t
 is_layer3_local_delivery(node_t *node, uint32_t dst_ip)
 {
-    printf("\nfn : %s\n", __FUNCTION__);
-
     char ip[16];
     ip_n_to_p(dst_ip, ip);
     ip[15] = '\0';
@@ -50,17 +39,12 @@ is_layer3_local_delivery(node_t *node, uint32_t dst_ip)
             return TRUE;
     }
     
-    
     return FALSE;
 }
-
-
 
 void
 init_rt_table(rt_table_t **rt_table)
 {
-    printf("\nfn : %s\n", __FUNCTION__);
-
     (*rt_table) = calloc(1, sizeof(rt_table_t));
     
     init_glthread(&((*rt_table)->route_list));
@@ -70,8 +54,6 @@ l3_route_t *
 rt_table_lookup(rt_table_t *rt_table, char *dest,
                 char mask)
 {
-    printf("\nfn : %s\n", __FUNCTION__);
-
     l3_route_t *l3_route = NULL;
     glthread_t *curr = NULL;
     
@@ -90,8 +72,6 @@ rt_table_lookup(rt_table_t *rt_table, char *dest,
 void
 delete_rt_table_entry(rt_table_t *rt_table, char *dest, char mask)
 {
-    printf("\nfn : %s\n", __FUNCTION__);
-
     char dst_str_with_mask[16];
     apply_mask(dest, mask, dst_str_with_mask);
     l3_route_t *l3_route = rt_table_lookup(rt_table, dst_str_with_mask,
@@ -105,8 +85,6 @@ delete_rt_table_entry(rt_table_t *rt_table, char *dest, char mask)
 static bool_t
 _rt_table_entry_add(rt_table_t *rt_table, l3_route_t *l3_route)
 {
-    printf("\nfn : %s\n", __FUNCTION__);
-
     l3_route_t *l3_route_old = rt_table_lookup(rt_table,
                                                l3_route->dest,
                                                l3_route->mask);
@@ -131,9 +109,7 @@ void
 rt_table_add_direct_route(rt_table_t *rt_table,
                           char *dst, char mask)
 {
-    printf("\nfn : %s\n", __FUNCTION__);
-
-    rt_table_add_route(rt_table, dst, mask, 0, 0);
+   rt_table_add_route(rt_table, dst, mask, 0, 0);
 }
 
 void
@@ -141,8 +117,6 @@ rt_table_add_route(rt_table_t *rt_table,
                    char *dst, char mask,
                    char *gw, char *oif)
 {
-    printf("\nfn : %s\n", __FUNCTION__);
-
     unsigned int dst_int;
     char dst_str_with_mask[16];
     
@@ -181,8 +155,6 @@ l3_route_t *
 l3rib_lookup_lpm(rt_table_t *rt_table,
                  uint32_t dest_ip)
 {
-    printf("\nfn : %s\n", __FUNCTION__);
-
     l3_route_t *l3_route = NULL,
                *lpm_l3_route = NULL,
                *default_l3_route = NULL;
@@ -223,9 +195,6 @@ static void
 layer3_pkt_recv_from_top(node_t *node, char *pkt, unsigned int size,
                          int protocol_number, unsigned int dst_ip_addr)
 {
-    printf("\nfn : %s\n", __FUNCTION__);
-
-    
     ip_hdr_t ip_hdr;
     
     initialize_ip_hdr(&ip_hdr);
@@ -298,8 +267,6 @@ demote_packet_to_layer3(node_t *node,
                         int protocol_number,
                         unsigned int dst_ip_addr)
 {
-    printf("\nfn : %s\n", __FUNCTION__);
-
     layer3_pkt_recv_from_top(node, pkt, size, protocol_number, dst_ip_addr);
 }
 
@@ -309,8 +276,6 @@ layer3_ip_pkt_recv_from_layer2(node_t *node,
                                ip_hdr_t *pkt,
                                unsigned int pkt_size)
 {
-    printf("\nfn : %s\n", __FUNCTION__);
-
     char dst_ip_add[16];
     
     ip_hdr_t *ip_hdr = pkt;
@@ -377,8 +342,6 @@ _layer3_pkt_recv_from_layer2(node_t *node,
                              char *pkt, uint32_t pkt_size,
                              int L3_protocol_number)
 {
-    printf("\nfn : %s\n", __FUNCTION__);
-
     switch(L3_protocol_number)
     {
         case ETH_IP:
@@ -394,8 +357,6 @@ void promote_pkt_to_layer3(node_t *node,
                               char *pkt, unsigned int pkt_size,
                               int L3_protocol_number)
 {
-    printf("\nfn : %s\n", __FUNCTION__);
-
     _layer3_pkt_recv_from_layer2(node, interface,
                                 pkt, pkt_size, L3_protocol_number);
 }
