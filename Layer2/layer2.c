@@ -20,8 +20,6 @@ promote_pkt_to_layer3(node_t *node, interface_t *interface,
 
 void init_arp_table(arp_table_t **arp_table)
 {
-    printf("\nfn : %s\n", __FUNCTION__);
-
     *arp_table = calloc(1, sizeof(arp_table_t));
     init_glthread(&((*arp_table)->arp_entries));
 }
@@ -30,8 +28,6 @@ void init_arp_table(arp_table_t **arp_table)
 arp_entry_t *
 arp_table_lookup(arp_table_t *arp_table, char *ip_addr)
 {
-    printf("\nfn : %s\n", __FUNCTION__);
-
     glthread_t *curr;
     arp_entry_t *arp_entry;
     
@@ -51,8 +47,6 @@ arp_table_lookup(arp_table_t *arp_table, char *ip_addr)
 static void
 delete_arp_pending_entry(arp_pending_entry_t *arp_pending_entry)
 {
-    printf("\nfn : %s\n", __FUNCTION__);
-
     remove_glthread(&arp_pending_entry->arp_pending_entry_glue);
     free(arp_pending_entry);
 }
@@ -61,8 +55,6 @@ delete_arp_pending_entry(arp_pending_entry_t *arp_pending_entry)
 void
 delete_arp_entry(arp_entry_t *arp_entry)
 {
-    printf("\nfn : %s\n", __FUNCTION__);
-
     glthread_t *curr;
     arp_pending_entry_t *arp_pending_entry = NULL;
     remove_glthread(&arp_entry->arp_glue);
@@ -81,10 +73,7 @@ bool_t
 arp_table_entry_add(arp_table_t *arp_table,
                     arp_entry_t *arp_entry,
                     glthread_t **arp_pending_list)
-{
-    printf("\nfn : %s\n", __FUNCTION__);
-
-    
+{   
     if(arp_pending_list)
         assert(*arp_pending_list == NULL);
     
@@ -156,8 +145,6 @@ pending_arp_processing_callback_function(node_t *node,
                                          arp_entry_t *arp_entry,
                                          arp_pending_entry_t *arp_pending_entry)
 {
-    printf("\nfn : %s\n", __FUNCTION__);
-
     ethernet_hdr_t* ethernet_hdr = (ethernet_hdr_t *)(arp_pending_entry->pkt);
     unsigned int pkt_size = arp_pending_entry->pkt_size;
     
@@ -176,8 +163,6 @@ process_arp_pending_entry(node_t *node,
                           arp_entry_t *arp_entry,
                           arp_pending_entry_t *arp_pending_entry)
 {
-    printf("\nfn : %s\n", __FUNCTION__);
-
     arp_pending_entry->cb(node, oif, arp_entry, arp_pending_entry);
 }
 
@@ -187,8 +172,6 @@ arp_table_update_from_arp_reply(arp_table_t *arp_table,
                                  arp_hdr_t *arp_hdr,
                                  interface_t *iif)
 {
-    printf("\nfn : %s\n", __FUNCTION__);
-
     unsigned int src_ip = 0;
     
     glthread_t *arp_pending_list = NULL;
@@ -237,8 +220,6 @@ arp_table_update_from_arp_reply(arp_table_t *arp_table,
 void
 delete_arp_table_entry(arp_table_t *arp_table, char *ip_addr)
 {
-    printf("\nfn : %s\n", __FUNCTION__);
-
     arp_entry_t *arp_entry = arp_table_lookup(arp_table, ip_addr);
     
     if(!arp_entry)
@@ -250,7 +231,7 @@ delete_arp_table_entry(arp_table_t *arp_table, char *ip_addr)
 
 void send_arp_broadcast_request(node_t *node, interface_t *oif, char *ip_addr)
 {
-    printf("\nfn : %s\n", __FUNCTION__);
+   
 
     unsigned int payload_size = sizeof(arp_hdr_t);
     
@@ -305,7 +286,7 @@ void send_arp_broadcast_request(node_t *node, interface_t *oif, char *ip_addr)
 static void
 send_arp_reply_msg(ethernet_hdr_t *ethernet_hdr_in, interface_t *oif)
 {
-    printf("\nfn : %s\n", __FUNCTION__);
+    
 
     arp_hdr_t *arp_hdr_in = (arp_hdr_t *)GET_ETHERNET_HDR_PAYLOAD(ethernet_hdr_in);
     
@@ -350,7 +331,7 @@ send_arp_reply_msg(ethernet_hdr_t *ethernet_hdr_in, interface_t *oif)
 static void
 process_arp_reply_msg(node_t *node, interface_t *iif, ethernet_hdr_t *ethernet_hdr)
 {
-    printf("\nfn : %s\n", __FUNCTION__);
+   
 
     printf("%s : ARP reply msg recvd on interface %s of node %s\n",
            __FUNCTION__, iif->if_name, iif->att_node->name);
@@ -365,7 +346,7 @@ process_arp_reply_msg(node_t *node, interface_t *iif, ethernet_hdr_t *ethernet_h
 static void
 process_arp_broadcast_req(node_t *node, interface_t *iif, ethernet_hdr_t *ethernet_hdr)
 {
-    printf("\nfn : %s\n", __FUNCTION__);
+    
 
     printf("%s : ARP Broadcast msg recvd on interface %s of node %s\n",
            __FUNCTION__, iif->if_name, iif->att_node->name);
@@ -393,7 +374,7 @@ add_arp_pending_entry(arp_entry_t *arp_entry,
                       char *pkt,
                       unsigned int pkt_size)
 {
-    printf("\nfn : %s\n", __FUNCTION__);
+    
 
     arp_pending_entry_t *arp_pending_entry =
     calloc(1, sizeof(arp_pending_entry_t) + pkt_size);
@@ -413,7 +394,7 @@ arp_entry_t *
 create_arp_sane_entry(arp_table_t *arp_table,
                       char *ip_addr)
 {
-    printf("\nfn : %s\n", __FUNCTION__);
+    
 
     arp_entry_t *arp_entry = arp_table_lookup(arp_table, ip_addr);
     
@@ -449,7 +430,7 @@ void interface_set_l2_mode(node_t *node,
                            interface_t *interface,
                            char *l2_mode_option)
 {
-    printf("\nfn : %s\n", __FUNCTION__);
+    
 
     intf_l2_mode_t intf_l2_mode;
     
@@ -499,7 +480,6 @@ void interface_set_l2_mode(node_t *node,
 void
 interface_set_vlan(node_t *node, interface_t *interface, unsigned int vlan_id)
 {
-    printf("\nfn : %s\n", __FUNCTION__);
 
     if(IS_INTF_L3_MODE(interface))
     {
@@ -567,7 +547,7 @@ node_set_intf_vlan_membership(node_t *node,
                               char *intf_name,
                               unsigned int vlan_id)
 {
-    printf("\nfn : %s\n", __FUNCTION__);
+    
 
     interface_t *interface = get_node_if_by_name(node, intf_name);
     assert(interface);
@@ -578,8 +558,6 @@ node_set_intf_vlan_membership(node_t *node,
 void node_set_intf_l2_mode(node_t *node, char *intf_name,
                            intf_l2_mode_t intf_l2_mode)
 {
-    printf("\nfn : %s\n", __FUNCTION__);
-
     interface_t *interface = get_node_if_by_name(node, intf_name);
     assert(interface);
     
@@ -591,8 +569,6 @@ ethernet_hdr_t *
 tag_pkt_with_vlan_id(ethernet_hdr_t *ethernet_hdr, unsigned int total_pkt_size,
                      int vlan_id, unsigned int *new_pkt_size)
 {
-    printf("\nfn : %s\n", __FUNCTION__);
-
     unsigned int payload_size = 0;
     *new_pkt_size = 0;
     vlan_8021q_hdr_t *vlan_8021q_hdr = is_pkt_vlan_tagged(ethernet_hdr);
@@ -647,8 +623,6 @@ untag_pkt_with_vlan_id(ethernet_hdr_t *ethernet_hdr,
                        unsigned int total_pkt_size,
                        unsigned int *new_pkt_size)
 {
-    printf("\nfn : %s\n", __FUNCTION__);
-
     *new_pkt_size = 0;
     
     vlan_8021q_hdr_t* vlan_8021q_hdr = is_pkt_vlan_tagged(ethernet_hdr);
@@ -682,8 +656,6 @@ promote_pkt_to_layer2(node_t *node, interface_t *iif,
                       ethernet_hdr_t *ethernet_hdr,
                       uint32_t pkt_size)
 {
-    printf("\nfn : %s\n", __FUNCTION__);
-
     switch (ethernet_hdr->type)
     {
         case ARP_MSG:
@@ -719,8 +691,6 @@ void
 layer2_frame_recv(node_t *node, interface_t *interface,
                        char *pkt, unsigned int pkt_size)
 {
-    printf("\nfn : %s\n", __FUNCTION__);
-
     unsigned int vlan_id_to_tag = 0;
     
     ethernet_hdr_t *ethernet_hdr = (ethernet_hdr_t *) pkt;
@@ -770,8 +740,6 @@ l2_forward_ip_packet(node_t *node, unsigned int next_hop_ip,
                      char *outgoing_intf, ethernet_hdr_t *pkt,
                      unsigned int pkt_size)
 {
-    printf("\nfn : %s\n", __FUNCTION__);
-
     interface_t *oif = NULL;
     char next_hop_ip_str[16];
     arp_entry_t *arp_entry = NULL;
@@ -868,8 +836,6 @@ layer2_pkt_recv_from_top(node_t *node,
                          unsigned int pkt_size,
                          int protocol_number)
 {
-    printf("\nfn : %s\n", __FUNCTION__);
-
     assert(pkt_size < sizeof(((ethernet_hdr_t *)0)->payload));
     
     if(protocol_number == ETH_IP)
@@ -890,8 +856,6 @@ demote_pkt_to_layer2(node_t *node,
                      unsigned int pkt_size,
                      int protocol_number)
 {
-    printf("\nfn : %s\n", __FUNCTION__);
-
     layer2_pkt_recv_from_top(node, next_hop_ip, oif,
                              pkt, pkt_size, protocol_number);
 }
@@ -899,8 +863,6 @@ demote_pkt_to_layer2(node_t *node,
 void
 dump_arp_table(arp_table_t *arp_table)
 {
-    printf("\nfn : %s\n", __FUNCTION__);
-
     glthread_t *curr;
     arp_entry_t *arp_entry;
     
