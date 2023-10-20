@@ -21,8 +21,6 @@ typedef struct mac_table_
 
 void init_mac_table(mac_table_t **mac_table)
 {
-    printf("\nfn : %s\n", __FUNCTION__);
-
     *mac_table = calloc(1, sizeof(mac_table_t));
     init_glthread(&((*mac_table)->mac_entries));
 }
@@ -30,8 +28,6 @@ void init_mac_table(mac_table_t **mac_table)
 mac_table_entry_t *
 mac_table_lookup(mac_table_t *mac_table, char *mac)
 {
-    printf("\nfn : %s\n", __FUNCTION__);
-
     glthread_t *curr;
     mac_table_entry_t *mac_table_entry;
     
@@ -47,8 +43,6 @@ mac_table_lookup(mac_table_t *mac_table, char *mac)
 void
 delete_mac_table_entry(mac_table_t *mac_table, char *mac)
 {
-    printf("\nfn : %s\n", __FUNCTION__);
-
     mac_table_entry_t *mac_table_entry;
     mac_table_entry = mac_table_lookup(mac_table, mac);
     if(!mac_table_entry) return;
@@ -65,8 +59,6 @@ delete_mac_table_entry(mac_table_t *mac_table, char *mac)
 bool_t mac_table_entry_add(mac_table_t *mac_table,
                            mac_table_entry_t *mac_table_entry)
 {
-    printf("\nfn : %s\n", __FUNCTION__);
-
     mac_table_entry_t *mac_table_entry_old = mac_table_lookup(mac_table, mac_table_entry->mac.mac);
     
     if(mac_table_entry_old && IS_MAC_TABLE_ENTRY_EQUAL(mac_table_entry, mac_table_entry_old) ) {
@@ -83,8 +75,6 @@ bool_t mac_table_entry_add(mac_table_t *mac_table,
 void
 dump_mac_table(mac_table_t *mac_table)
 {
-    printf("\nfn : %s\n", __FUNCTION__);
-
     glthread_t *curr;
     mac_table_entry_t *mac_table_entry;
     
@@ -105,8 +95,6 @@ dump_mac_table(mac_table_t *mac_table)
 static void
 l2_switch_perform_mac_learning(node_t *node, char *src_mac, char *if_name)
 {
-    printf("\nfn : %s\n", __FUNCTION__);
-
     mac_table_entry_t *mac_table_entry = calloc(1, sizeof(mac_table_entry_t));
     memcpy(mac_table_entry->mac.mac, src_mac, sizeof(mac_add_t));
     strncpy(mac_table_entry->oif_name, if_name, IF_NAME_SIZE);
@@ -122,8 +110,6 @@ static bool_t
 l2_switch_send_pkt_out(char *pkt, unsigned int pkt_size,
                        interface_t *oif)
 {
-    printf("\nfn : %s\n", __FUNCTION__);
-
     assert(!IS_INTF_L3_MODE(oif));
     
     intf_l2_mode_t intf_l2_mode = IF_L2_MODE(oif);
@@ -200,8 +186,6 @@ static bool_t
 l2_switch_flood_pkt_out(node_t *node, interface_t *exempted_intf,
                         char *pkt, unsigned int pkt_size)
 {
-    printf("\nfn : %s\n", __FUNCTION__);
-
     int i = 0;
     
     interface_t *oif = NULL;
@@ -232,11 +216,7 @@ static void
 l2_switch_forward_frame(node_t *node, interface_t *recv_intf,
                         ethernet_hdr_t *ethernet_hdr,
                         unsigned int pkt_size)
-{
-    printf("\nfn : %s\n", __FUNCTION__);
-
-    
-    
+{   
     if(IS_MAC_BROADCAST(ethernet_hdr->dst_mac.mac))
     {
         l2_switch_flood_pkt_out(node, recv_intf,
@@ -264,8 +244,6 @@ void
 l2_switch_recv_frame(interface_t *interface,
                      char *pkt, unsigned int pkt_size)
 {
-    printf("\nfn : %s\n", __FUNCTION__);
-
     node_t *node = interface->att_node;
     ethernet_hdr_t *ethernet_hdr = (ethernet_hdr_t *) pkt;
     
