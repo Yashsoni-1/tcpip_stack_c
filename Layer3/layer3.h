@@ -1,9 +1,3 @@
-//
-//  layer3.h
-//  tcp_ip_stack_c
-//
-//  Created by Yash soni on 19/08/23.
-//
 
 #ifndef layer3_h
 #define layer3_h
@@ -43,8 +37,6 @@ typedef struct ip_hdr_
 static inline void
 initialize_ip_hdr(ip_hdr_t *ip_hdr)
 {
-    printf("\nfn : %s\n", __FUNCTION__);
-
     ip_hdr->version = 4;
     ip_hdr->ihl = 5;
     ip_hdr->tos = 0;
