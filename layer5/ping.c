@@ -1,10 +1,3 @@
-//
-//  ping.c
-//  tcp_ip_stack_c
-//
-//  Created by Yash soni on 20/08/23.
-//
-
 #include <stdio.h>
 #include "../graph.h"
 #include <arpa/inet.h>
