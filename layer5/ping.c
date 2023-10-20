@@ -20,8 +20,6 @@ demote_packet_to_layer3(node_t *node,
 void
 layer5_ping_fn(node_t *node, char *dst_ip_addr)
 {
-    printf("\nfn : %s\n", __FUNCTION__);
-
     unsigned int addr_int;
     
     printf("Src node : %s, Ping ip : %s\n", node->name, dst_ip_addr);
