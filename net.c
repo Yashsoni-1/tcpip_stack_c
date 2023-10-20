@@ -43,7 +43,6 @@ rt_table_add_direct_route(rt_table_t *rt_table, char *ip_addr, char mask);
 bool_t
 node_set_loopback_address(node_t *node, char *ip_addr)
 {
-
     assert(ip_addr);
     
     node->node_nw_prop.is_lp_addr_config = TRUE;
