@@ -127,7 +127,7 @@ build_square_topo(void)
 #endif
     
     
-    graph_t *topo = create_new_graph("Linear 3 node Graph");
+    graph_t *topo = create_new_graph("Square Topo");
     node_t *R1 = create_graph_node(topo, "R1");
     node_t *R2 = create_graph_node(topo, "R2");
     node_t *R3 = create_graph_node(topo, "R3");
