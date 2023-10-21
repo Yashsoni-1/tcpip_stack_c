@@ -2,6 +2,7 @@
 #include <arpa/inet.h>
 #include <assert.h>
 #include "comm.h"
+#include "graph.h"
 
 extern void
 demote_pkt_to_layer2(node_t *node,
