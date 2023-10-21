@@ -1,6 +1,6 @@
 CC=gcc
 CFLAGS=-g
-TARGET:tcpstack.exe CommandParser/libcli.a 
+TARGET:tcpstack.exe CommandParser/libcli.a pkt_gen.exe
 LIBS=-lpthread -L ./CommandParser -lcli -lrt
 
 OBJS=gl_thread/gl_thread.o \
@@ -18,8 +18,8 @@ OBJS=gl_thread/gl_thread.o \
 	    pkt_dump.o 
 
 
-pkt_gen.exe:pkt_gen.o
-	${CC} ${CFLAGS} -I Layer3/layer3.h -I Layer2/layer2.h -I utils.h pkt_gen.o utils.o -o pkt_gen.exe
+pkt_gen.exe:pkt_gen.o utils.o
+	${CC} ${CFLAGS} -I tcp_public.h pkt_gen.o utils.o -o pkt_gen.exe
 
 pkt_gen.o:pkt_gen.c
 	${CC} ${CFLAGS} -c pkt_gen.c -o pkt_gen.o
