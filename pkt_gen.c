@@ -5,7 +5,7 @@
 #include "utils.h"
 #include <errno.h>
 #include <netdb.h>
-#include <tcp_public.h>
+#include "tcp_public.h"
 #include <memory.h>
 
 #define SRC_NODE_UDP_PORT_NO 40000
