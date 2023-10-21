@@ -9,7 +9,7 @@
 #include <memory.h>
 
 #define SRC_NODE_UDP_PORT_NO 40000
-#define INGRESS_INTF_NAME "eth7"
+#define INGRESS_INTF_NAME "eth0/7"
 #define DEST_IP_ADDR "122.1.1.3"
 
 static char send_buffer[MAX_PACKET_BUFFER_SIZE];
