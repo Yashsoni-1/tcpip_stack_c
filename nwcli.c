@@ -121,9 +121,9 @@ intf_config_handler(param_t *param, ser_buff_t *tlv_buf,
 	switch(CMDCODE) {
 		case CMDCODE_CONF_INTF_UP_DOWN:
 			if(strncmp(if_up_down, "up", strlen("up")) == 0) {
-				interface->intf_nw_props.is_up == TRUE;
+				interface->intf_nw_props.is_up = TRUE;
 			} else {
-				interface->intf_nw_props.is_up == FALSE;
+				interface->intf_nw_props.is_up = FALSE;
 			}
 			break;
 		default:
