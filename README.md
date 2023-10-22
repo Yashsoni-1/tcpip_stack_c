@@ -3,6 +3,7 @@
 ## TO DO NEXT
 - [x] To implement PING application. 
 - [ ] To implement Automatic Routing Table construction.
+- [ ] To implement ECMP
 - [ ] To implement LOGS
 - [ ] To implement NPM(neighbour management protocol).
 - [ ] To implement Timer.
