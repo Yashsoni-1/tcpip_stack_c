@@ -5,7 +5,7 @@
 #include <stdio.h>
 #include "../gl_thread/gl_thread.h"
 #include <stdint.h>
-#include "../utils.h"
+#include "../graph.h"
 
 #pragma pack(push, 1)
 
