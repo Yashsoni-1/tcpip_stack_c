@@ -8,3 +8,7 @@
 - [ ] To implement NPM(neighbour management protocol).
 - [ ] To implement Timer.
 - [ ] To implement Event notification.
+
+## BUGS TO FIX
+- [x] Interface UP DOWN.
+- [ ] IP conversion. 
