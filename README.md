@@ -1,5 +1,8 @@
 # TCP/IP STACK C
 
+## GOALS
+- Implement Shortest Path Algorithm(Dijkstra Algorithm).
+
 ## TO DO NEXT
 - [x] To implement PING application. 
 - [ ] To implement Automatic Routing Table construction.
