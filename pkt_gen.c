@@ -32,7 +32,7 @@ _send_pkt_out(int sock_fd, char *pkt_data, uint32_t pkt_size, uint32_t dst_udp_p
 
 int main(int argc, char *argv[])
 {
-    uint32_t n_pkst_send = 0;
+    uint32_t n_pkts_send = 0;
 
     int udp_sock_fd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
 
@@ -57,7 +57,7 @@ int main(int argc, char *argv[])
 	initialize_ip_hdr(ip_hdr);
 
 	ip_hdr->protocol = ICMP_PRO;
-	ip_hdr->dst_ip = tcp_ip_convert_ip_p_to_n(DEST_IP_ADDR);
+	ip_hdr->dst_ip = ip_p_to_n(DEST_IP_ADDR);
 
 	uint32_t total_data_size = ETH_HDR_SIZE_EXCL_PAYLOAD + 20 + IF_NAME_SIZE;
 
