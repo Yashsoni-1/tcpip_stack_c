@@ -37,7 +37,7 @@ int main(int argc, char *argv[])
     int udp_sock_fd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
 
     if(udp_sock_fd == -1) {
- 		printf("UDP socket creation failed, errno = ", errno);
+ 		printf("UDP socket creation failed, errno = %d\n", errno);
 		return 0;
     }
 
