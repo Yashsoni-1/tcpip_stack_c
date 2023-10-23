@@ -34,6 +34,8 @@ struct link_
     unsigned int cost;
 } ;
 
+typedef struct spf_data_ spf_data_t; 
+
 struct node_
 {
     char name[NODE_NAME_SIZE];
@@ -42,6 +44,8 @@ struct node_
     unsigned int udp_port_number;
     int udp_sock_fd;
     node_nw_prop_t node_nw_prop;
+
+    spf_data_t *spf_data;
 } ;
 
 GLTHREAD_TO_STRUCT(graph_glue_to_node, node_t, graph_glue);
