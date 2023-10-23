@@ -7,4 +7,10 @@
 #define CMDCODE_CONF_NODE_L3ROUTE     10
 #define CMDCODE_ERO_PING              11
 #define CMDCODE_SHOW_INTF_STATS       13
+
+#define CMDCODE_RUN_SPF               18
+#define CMDCODE_SHOW_SPF_RESULTS      19
+#define CMDCODE_RUN_SPF_ALL           20
+
+
 #define CMDCODE_CONF_INTF_UP_DOWN     26
