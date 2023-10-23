@@ -298,3 +298,28 @@ dump_node_interface_stats(node_t *node)
         printf("\n");
     }
 }
+
+bool_t is_interface_l3_bidirectional(interface_t *interface)
+{
+    if(IF_L2_MODE(interface) == ACCESS || IF_L2_MODE(interface) == TRUNK) return FALSE;
+
+    if(!IF_L3_MODE(interface)) return FALSE;
+
+    interface_t *other_interface = &interface->link->intf1 == interface ? 
+                                    &interface->link->intf2 : &interface->link->intf1;
+
+    if(!other_interface) return FALSE;
+
+    if(!IF_IS_UP(interface) || !IF_IS_UP(other_interface)) return FALSE;
+
+    if(IF_L2_MODE(other_interface) == ACCESS || IF_L2_MODE(interface) == TRUNK) return FALSE;
+
+    if(!IF_L3_MODE(other_interface)) return FALSE;
+
+    if(!(is_same_subnet(IF_IP(interface), IF_MASK(interface), IF_IP(other_interface)) && 
+         is_same_subnet(IF_IP(other_interface), IF_MASK(other_interface), IF_IP(interface)))) {
+            return FALSE;
+        }
+
+    return TRUE:
+}
