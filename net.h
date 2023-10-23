@@ -168,4 +168,6 @@ void dump_node_interface_stats(node_t *node);
 void dump_interface_stats(interface_t *interface);
 void print_mac(char *heading, unsigned char *mac_address);
 
+bool_t is_interface_l3_bidirectional(interface_t *interface);
+
 #endif /* net_h */
