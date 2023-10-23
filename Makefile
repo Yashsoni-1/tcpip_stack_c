@@ -15,7 +15,7 @@ OBJS=gl_thread/gl_thread.o \
             utils.o \
 	    nwcli.o \
 	    Layer2/l2switch.o \
-	    layer5/spf_algo_spf.o \
+	    layer5/spf_algo/spf.o \
 	    pkt_dump.o 
 
 
@@ -72,8 +72,8 @@ layer5/layer5.o:layer5/layer5.c
 layer5/ping.o:layer5/ping.c
 	${CC} ${CFLAGS} -c -I . layer5/ping.c -o layer5/ping.o
 
-layer5/spf_algo_spf.o:layer5/spf_algo_spf.c
-	${CC} ${CFLAGS} -c -I . layer5/spf_algo_spf.c -o layer5/spf_algo_spf.o
+layer5/spf_algo/spf.o:layer5/spf_algo/spf.c
+	${CC} ${CFLAGS} -c -I . layer5/spf_algo/spf.c -o layer5/spf_algo/spf.o
 
 
 CommandParser/libcli.a:
