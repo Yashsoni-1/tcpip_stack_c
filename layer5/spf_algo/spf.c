@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include "../../tcp_public.h"
+#include <stdint.h>
 
 extern graph_t *topo;
 
@@ -13,6 +14,28 @@ static void show_spf_results(node_t *node)
 	printf("%s called...\n", __FUNCTION__);
 }
 
+typedef struct spf_data_ 
+{
+	node_t *node;
+	glthread_t spf_result_head;
+
+	uint32_t spf_metric;
+	glthread_t priority_thread_glue;
+	nexthop *nexthops[MAX_NXT_HOPS];
+} spf_data_t;
+GLTHREAD_TO_STRUCT(priority_thread_glue_to_spf_data, spf_data_t, priority_thread_glue);
+
+#define spf_data_offset_from_priority_thread_glue \
+	((size_t)&(((spf_data_t *)0)->priority_thread_glue)) 
+
+typedef struct spf_result_
+{
+	node_t *node;
+	uint32_t spf_metric;
+	nexthop_t *nexthops[MAX_NXT_HOPS];
+	glthread_t spf_res_glue;
+} spf_result_t;
+GLTHREAD_TO_STRUCT(spf_res_glue_to_spf_result, spf_result_t, spf_res_glue);
 
 int 
 spf_algo_handler(param_t *param, ser_buff_t *tlv_buf, op_mode enable_or_disable)
