@@ -54,13 +54,24 @@ initialize_ip_hdr(ip_hdr_t *ip_hdr)
     ip_hdr->dst_ip = 0;
 }
 
+typedef struct nexthop_
+{
+    char gw_ip[16];
+    interface_t *oif;
+    uint32_t ref_count;
+} nexthop_t;
+
+#define nexthop_node_name(nexthop_ptr) \
+    ((get_nbr_node(nexthop_ptr->oif))->name);
+
 typedef struct l3_route_
 {
     unsigned char dest[16];
     unsigned char mask;
     bool_t is_direct;
-    unsigned char gw_ip[16];
-    char oif[IF_NAME_SIZE];
+    nexthop_t *nexthops[MAX_NXT_HOPS];
+    uint32_t spf_metric;
+    int nxthop_idx;
     glthread_t rt_glue;
 } l3_route_t;
 
