@@ -37,6 +37,26 @@ typedef struct spf_result_
 } spf_result_t;
 GLTHREAD_TO_STRUCT(spf_res_glue_to_spf_result, spf_result_t, spf_res_glue);
 
+void spf_flush_nexthops(nexthop_t **nexthop)
+{
+	int i = 0;
+
+	if(!nexthop) return;
+
+	for(; i<MAX_NXT_HOPS; ++i) {
+		if(nexthop[i]) {
+			assert(nexthop[i]->ref_count);
+			nexthop[i]->ref_count--;
+			if(nexthop[i]->ref_count == 0) {
+				free(nexthop[i]);
+			}
+
+			nexthop[i] = NULL:
+			
+		}
+	}
+}
+
 int 
 spf_algo_handler(param_t *param, ser_buff_t *tlv_buf, op_mode enable_or_disable)
 {
