@@ -465,7 +465,7 @@ void nw_init_cli()
 
 	param_t *show = libcli_get_show_hook();
 	param_t *debug = libcli_get_debug_hook();
-    param_t *config = libcli_get_config_hook();
+    	param_t *config = libcli_get_config_hook();
 	param_t *run = libcli_get_run_hook();
 	param_t *debug_show = libcli_get_debug_show_hook();
 	param_t *root = libcli_get_root();
@@ -510,6 +510,13 @@ void nw_init_cli()
 			init_param(&node_name, LEAF, NULL, NULL, validate_node_existence, STRING, "node-name", 
 					"Node Name");
 			libcli_register_param(&node, &node_name);
+			{
+				static param_t spf;
+				init_param(&spf, CMD, "spf", spf_algo_handler,
+								0, INVALID, 0, "Trigger SPF");
+				libcli_register_param(&node_name, &spf);
+				set_param_cmd_code(&spf, CMDCODE_RUN_SPF);
+			}
 
 			{
 				static param_t ping;
@@ -594,6 +601,14 @@ void nw_init_cli()
 					libcli_register_param(&interface, &stats);
 					set_param_cmd_code(&stats, CMDCODE_SHOW_INTF_STATS);
 				}
+			}
+			
+			{
+				static param_t spf_result;
+				init_param(&spf_result, CMD, "spf_result", spf_algo_handler,
+								0, INVALID, 0, "SPF results");
+				libcli_register_param(&node_name, &spf_result);
+				set_param_cmd_code(&spf_result, CMDCODE_SHOW_SPF_RESULTS);
 			}
 
 			{
