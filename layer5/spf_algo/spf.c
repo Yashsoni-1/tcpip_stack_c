@@ -180,6 +180,81 @@ spf_lookup_spf_result_by_node(node_t *spf_root, node_t *node)
 	return NULL:
 }
 
+void initialize_direct_nbrs(node_t *spf_root)
+{
+	node_t *nbr = NULL;
+	char *next_hop_ip = NULL;
+	interface_t *oif = NULL;
+	nexthop_t nexthop = NULL
+
+	ITERATE_NODE_NBRS_BEGIN(spf_root, nbr, oif, nxt_hop_ip) 
+	{
+		if(!is_interface_l3_bidirectional(oif)) continue;
+
+		if(get_link_cost(oif) < SPF_METRIC(nbr)) {
+			spf_flush_nexthops(nbr->spf_data->nexthops);
+			nexthop = create_new_nexthop(oif);
+			spf_insert_new_nexthop(nbr->spf_data->nexthops, nexthops);
+			SPF_METRIC(nbr) = get_link_cost(oif);
+		}
+
+		else if(get_link_cost(oif) == SPF_METRIC(nbr)) {
+			nexthop = create_new_nexthop(oif);
+			spf_insert_new_nexthop(nbr->spf_data->nexthops, nexthops);
+		}
+	} ITERATE_NODE_NBRS_END(spf_root, nbr, oif, nxt_hop_ip) ;
+}
+
+static void 
+spf_record_result(node_t *spf_root, node_t *processed_node)
+{
+	assert(!spf_lookup_spf_result_by_node(spf_root, processed_node));
+	spf_result_t *spf_result = calloc(1, sizeof(spf_result_t));
+	
+	spf_result->node = processed_node;
+	spf_result->spf_metric = processed_node->spf_data->spf_metric;
+	spf_union_nexthops_arrays(processed_node->spf_data->nexthops, spf_result->nexthops);
+
+	init_glthread(&spf_result->spf_res_glue);
+	glthread_add_next(&spf_root->spf_data->spf_result_head, &spf_result->spf_res_glue);
+}
+
+static void 
+spf_explore_nbrs(node_t *spf_root,
+				node_t *curr_node,
+					glthread_t *priority_lst)
+{
+	node_t *nbr;
+	interface_t *oif;
+	char *nxt_hop_ip = NULL
+
+	ITERATE_NODE_NBRS_BEGIN(curr_node, nbr, oif, nxt_hop_ip) 
+	{
+		if(!is_interface_l3_bidirectional(oif)) continue;
+
+		if(SPF_METRIC(curr_node) + get_link_cost(oif) < SPF_METRIC(nbr)) {
+			spf_flush_nexthops(nbr->sfp_data->nexthops);
+			spf_union_nexthops_arrays(curr_node->spf_data->nexthops, nbr->spf_data->nexthops);
+			SPF_METRIC(nbr) = SPF_METRIC(curr_node) + get_link_cost(oif);
+
+			if(!IS_GLTHREAD_LIST_EMPTY(&nbr->spf_data->priority_thread_glue)) {
+				remove_glthread(&nbr->spf_data->priority_thread_glue);
+			}
+
+			glthread_priority_insert(&priority_lst, 
+				&nbr->spf_data->priority_thread_glue,
+				spf_comparison_fn,
+				spf_data_offset_from_priority_thread_glue);
+		}
+		else if(SPF_METRIC(curr_node) + get_link_cost(oif) == SPF_METRIC(nbr)) {
+			spf_union_nexthops_arrays(curr_node->spf_data->nexthops, nbr->spf_data->nexthops);
+		}
+	} ITERATE_NODE_NBRS_END(curr_node, nbr, oif, nxt_hop_ip);
+
+	spf_flush_nexthops(curr_node->spf_data->nexthops);
+}
+
+
 void compute_spf(node_t *spf_root)
 {
 	node_t *node, *nbr;
@@ -198,12 +273,90 @@ void compute_spf(node_t *spf_root)
 		init_node_spf_data(node, FALSE);
 	} ITERATE_GLTHREAD_END(&topo->node_list, curr);
 
+	initialize_direct_nbrs(spf_root);
+
+	glthread_t priority_lst;
+	init_glthread(&priority_lst);
+
+	glthread_priority_insert(&priority_lst, 
+		&spf_root->spf_data->priority_thread_glue,
+		spf_comparison_fn,
+		spf_data_offset_from_priority_thread_glue);
+
+	while(!IS_GLTHREAD_LIST_EMPTY(&priority_lst)) {
+		curr = dequeue_glthread_first(&priority_lst);
+		curr_spf_data = priority_thread_glue_to_spf_data(curr);
+
+		if(curr_spf_data->node == spf_root) {
+
+			ITERATE_NODE_NBRS_BEGIN(curr_spf_data->node, nbr, oif, nxt_hop_ip) {
+
+				if(!is_interface_l3_bidirectional(oif)) continue;
+
+				if(IS_GLTHREAD_LIST_EMPTY(&nbr->spf_data->priority_thread_glue)) {
+					glthread_priority_insert(&priority_lst,
+						&nbr->spf_data->priority_thread_glue,
+						spf_comparison_fn,
+						spf_data_offset_from_priority_thread_glue);
+				}
+			} ITERATE_NODE_NBRS_END(curr_spf_data->node, nbr, oif, nxt_hop_ip);
+		}
+
+		spf_record_result(spf_root, curr_spf_data->node);
+		
+		spf_explore_nbrs(spf_root, curr_spf_data->node, &priority_lst);
+	}
 	
+	int count = spf_install_routes(spf_root);
 }
 
 static void show_spf_results(node_t *node)
 {
-	printf("%s called...\n", __FUNCTION__);
+	int i=0, j=0;
+	glthread_t *curr;
+	interface_t *oif = NULL;
+	spf_result_t *res = NULL;
+
+	printf("\nSPF run results for node = %s\n", node->name);
+
+	ITERATE_GLTHREAD_BEGIN(&node->spf_data->spf_result_head, curr) {
+
+		res = spf_res_glue_to_spf_result(curr);
+		printf("DEST : %-10s spf_metric : %-6u", res->node->name, res->spf_metric);
+
+		printf(" Nxt Hop : ");
+		j=0;
+
+		for(i=0; i < MAX_NXT_HOPS; ++i, ++j) {
+			if(!res->nexthops[i]) continue;
+
+			oif = res->nexthops[i]->oif;
+
+			if(j == 0) {
+				printf("%-8s      OIF : %-7s    gateway : %-16s ref_count = %u\n",
+					nexthop_node_name(res->nexthops[i]),
+					oif->if_name, res->nexthops[i]->gw_ip,
+					res->nexthop[i]->ref_count);
+			}
+			else {
+				printf("                                          : "
+					"%-8s      OIF : %-7s    gateway : %-16s ref_count = %u\n",
+					nexthop_node_name(res->nexthops[i]),
+					oif->if_name, res->nexthops[i]->gw_ip,
+					res->nexthop[i]->ref_count);
+			}
+		}
+	} ITERATE_GLTHREAD_END(&node->spf_data->spf_result_head, curr);
+}
+
+static void
+compute_spf_all_routers(graph_t *topo) 
+{
+	glthread_t *curr;
+	ITERATE_GLTHREAD_BEGIN(&topo->node_list, curr) {
+		node_t *node = graph_glue_to_node(curr);
+		compute_spf(node);
+	} ITERATE_GLTHREAD_END(&topo->node_list, curr);
 }
 
 int 
