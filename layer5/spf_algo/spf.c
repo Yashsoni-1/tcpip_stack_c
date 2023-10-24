@@ -8,15 +8,6 @@ extern graph_t *topo;
 
 #define SPF_METRIC(nodeptr) (nodeptr->spf_data->spf_metric)
 
-void compute_spf(node_t *spf_root)
-{
-	printf("%s called...\n", __FUNCTION__);
-}
-
-static void show_spf_results(node_t *node)
-{
-	printf("%s called...\n", __FUNCTION__);
-}
 
 typedef struct spf_data_ 
 {
@@ -67,6 +58,29 @@ free_spf_result(spf_result_t *spf_result)
 	spf_flush_nexthops(spf_result->nexthops);
 	remove_glthread(&spf_result->spf_res_glue);
 	free(spf_result);
+}
+
+static void
+init_node_spf_data(node_t *node, bool_t delete_spf_result)
+{
+	if(!node->spf_data) {
+		node->spf_data = calloc(1, sizeof(spf_data_t));
+		init_glthread(&node->spf_data->spf_result_head);
+		node->spf_data->node = node;
+	}
+	else if(delete_spf_result) {
+		glthread_t *curr;
+		ITERATE_GLTHREAD_BEGIN(&node->spf_data->spf_result_head, curr)
+		{
+			spf_result_t *res = spf_res_glue_to_spf_result(curr);
+			free_spf_result(res);
+		}ITERATE_GLTHREAD_END(&node->spf_data->spf_result_head, curr);
+		init_glthread(&node->spf_data->spf_result_head);
+	}
+
+	SPF_METRIC(node) = INFINITE_METRIC;
+	remove_glthread(&head->spf_data->priority_thread_glue);
+	spf_flush_nexthops(node->spf_data->nexthops);
 }
 
 static nexthop_t *
@@ -164,6 +178,32 @@ spf_lookup_spf_result_by_node(node_t *spf_root, node_t *node)
 	} ITERATE_GLTHREAD_END(&spf_root->spf_data->spf_result_head, curr) 
 
 	return NULL:
+}
+
+void compute_spf(node_t *spf_root)
+{
+	node_t *node, *nbr;
+	glthread_t *curr;
+	interface_t *oif;
+	char *nxt_hop_ip = NULL;
+	spf_data_t *curr_spf_data;
+
+	init_node_spf_data(spf_root, TRUE);
+	SPF_METRIC(spf_root) = 0;
+
+	ITERATE_GLTHREAD_BEGIN(&topo->node_list, curr)
+	{
+		node = graph_glue_to_node(curr);
+		if(node = spf_root) continue;
+		init_node_spf_data(node, FALSE);
+	} ITERATE_GLTHREAD_END(&topo->node_list, curr);
+
+	
+}
+
+static void show_spf_results(node_t *node)
+{
+	printf("%s called...\n", __FUNCTION__);
 }
 
 int 
