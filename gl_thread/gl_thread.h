@@ -25,6 +25,8 @@ glthread_priority_insert(glthread_t *base_glthread,
                          glthread_t *glthread,
                          int (*comp_fn)(void *, void *),
                          int offset);
+glthread_t *
+dequeue_glthread_first(glthread_t *base_glthread);
 
 #define IS_GLTHREAD_LIST_EMPTY(glthreadptr) \
  ((glthreadptr)->right == 0 && (glthreadptr)->left == 0)
