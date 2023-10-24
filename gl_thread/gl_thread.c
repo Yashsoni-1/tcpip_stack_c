@@ -121,7 +121,7 @@ glthread_priority_insert(glthread_t *glthread_head,
             glthread_add_next(glthread_head, glthread);
         }
         else {
-            glthread_add_next(glthread_head->next, glthread);
+            glthread_add_next(glthread_head->right, glthread);
         }
         return;
     }
@@ -145,3 +145,14 @@ glthread_priority_insert(glthread_t *glthread_head,
 
     glthread_add_next(prev, glthread);
 }
+
+glthread_t *
+dequeue_glthread_first(glthread_t *base_glthread)
+{
+    glthread_t *temp = NULL;
+    if(!base_glthread->right) return NULL;
+    temp = base_glthread->right;
+    remove_glthread(temp);
+    return temp;
+}
+
