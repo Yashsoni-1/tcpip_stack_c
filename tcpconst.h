@@ -9,6 +9,8 @@
 #define ICMP_PRO 1
 #define VLAN_8021Q_PROTO 0x8100
 #define IP_IN_IP 4
+#define INTF_MAX_METRIC 16777215
+#define INTF_METRIC_DEFAULT 1
 
 #define MAX_NXT_HOPS 4
 
