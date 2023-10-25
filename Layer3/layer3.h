@@ -75,6 +75,9 @@ typedef struct l3_route_
     glthread_t rt_glue;
 } l3_route_t;
 
+nexthop_t *
+l3_route_get_active_nexthop(l3_route_t *l3_route);
+
 typedef struct rt_table_
 {
     glthread_t route_list;
