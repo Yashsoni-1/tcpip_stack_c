@@ -77,63 +77,6 @@ display_node_interfaces(param_t *param, ser_buff_t *tlv_buf)
 	}
 }
 
-static int 
-intf_config_handler(param_t *param, ser_buff_t *tlv_buf,
-		    op_mode enable_or_disable)
-{
-	node_t *node = NULL;
-	char *node_name = NULL;
-	char *intf_name = NULL;
-	interface_t *interface = NULL;
-
-	char *if_up_down;
-
-	int CMDCODE = -1;
-
-	CMDCODE = EXTRACT_CMD_CODE(tlv_buf);
-	
-	tlv_struct_t *tlv = NULL;
-
-	TLV_LOOP_BEGIN(tlv_buf, tlv)
-	{
-		if(strncmp(tlv->leaf_id, "node-name", strlen("node-name")) == 0)
-			node_name = tlv->value;
-		else if(strncmp(tlv->leaf_id, "if-name", strlen("if-name")) == 0)
-			intf_name = tlv->value;
-		else if(strncmp(tlv->leaf_id, "if-up-down", strlen("if-up-down")) == 0)
-			if_up_down = tlv->value;
-		else
-			assert(0);
-		
-	} TLV_LOOP_END;
-
-	node = get_node_by_node_name(topo, node_name);
-
-	interface = get_node_if_by_name(node, intf_name);
-
-	if(!interface)
-	{
-		printf("Error : Interface %s do not exist\n", intf_name);
-		return -1;
-	}
-
-	uint32_t if_change_flags = 0;
-
-	switch(CMDCODE) {
-		case CMDCODE_CONF_INTF_UP_DOWN:
-			if(strncmp(if_up_down, "up", strlen("up")) == 0) {
-				interface->intf_nw_props.is_up = TRUE;
-			} else {
-				interface->intf_nw_props.is_up = FALSE;
-			}
-			break;
-		default:
-			break;
-	}
-
-	return 0;
-}
-
 
 static void 
 display_graph_node(param_t *param, ser_buff_t *tlv_buf)
@@ -196,6 +139,18 @@ validate_mask_value(char *mask_str)
 
 	return VALIDATION_FAILED;
 }
+
+static int
+validate_interface_metric_val(char *value) 
+{
+	uint32_t metric_val = atoi(value);
+	if(metric_val > 0 && metric_val <= INTF_MAX_METRIC)
+		return VALIDATION_SUCCESS;
+
+	return VALIDATION_FAILED;
+}
+
+
 
 extern void
 send_arp_broadcast_request(node_t *node, interface_t *oif, char *ip_addr);
@@ -460,13 +415,82 @@ ping_handler(param_t *param, ser_buff_t *tlv_buf, op_mode enable_or_disable)
 	return 0;
 }
 
+static int 
+intf_config_handler(param_t *param, ser_buff_t *tlv_buf,
+		    op_mode enable_or_disable)
+{
+	node_t *node = NULL;
+	char *node_name = NULL;
+	char *intf_name = NULL;
+	interface_t *interface = NULL;
+	char *if_up_down;
+	uint32_t intf_new_metric_val;
+	int CMDCODE = -1;
+
+	CMDCODE = EXTRACT_CMD_CODE(tlv_buf);
+	
+	tlv_struct_t *tlv = NULL;
+
+	TLV_LOOP_BEGIN(tlv_buf, tlv)
+	{
+		if(strncmp(tlv->leaf_id, "node-name", strlen("node-name")) == 0)
+			node_name = tlv->value;
+		else if(strncmp(tlv->leaf_id, "if-name", strlen("if-name")) == 0)
+			intf_name = tlv->value;
+		else if(strncmp(tlv->leaf_id, "if-up-down", strlen("if-up-down")) == 0)
+			if_up_down = tlv->value;
+		else if(strncmp(tlv->leaf_id, "metric-val", strlen("metric-val")) == 0)
+			intf_new_metric_val = atoi(tlv->value);
+		else
+			assert(0);
+		
+	} TLV_LOOP_END;
+
+	node = get_node_by_node_name(topo, node_name);
+
+	interface = get_node_if_by_name(node, intf_name);
+
+	if(!interface)
+	{
+		printf("Error : Interface %s do not exist\n", intf_name);
+		return -1;
+	}
+
+	uint32_t if_change_flags = 0;
+
+	switch(CMDCODE) {
+		case CMDCODE_INTF_CONFIG_METRIC:
+			switch(enable_or_disable) {
+				case CONFIG_ENABLE:
+					interface->link->cost = intf_new_metric_val;
+				break;
+				case CONFIG_DISABLE:
+					interface->link->cost = INTF_METRIC_DEFAULT;
+				break;
+			}
+			break;
+		case CMDCODE_CONF_INTF_UP_DOWN:
+			if(strncmp(if_up_down, "up", strlen("up")) == 0) {
+				interface->intf_nw_props.is_up = TRUE;
+			} else {
+				interface->intf_nw_props.is_up = FALSE;
+			}
+			break;
+		default:
+			break;
+	}
+
+	return 0;
+}
+
+
 void nw_init_cli()
 {
 	init_libcli();
 
 	param_t *show = libcli_get_show_hook();
 	param_t *debug = libcli_get_debug_hook();
-    	param_t *config = libcli_get_config_hook();
+    param_t *config = libcli_get_config_hook();
 	param_t *run = libcli_get_run_hook();
 	param_t *debug_show = libcli_get_debug_show_hook();
 	param_t *root = libcli_get_root();
@@ -494,6 +518,19 @@ void nw_init_cli()
 					libcli_register_param(&node, &node_name);
 					set_param_cmd_code(&node_name, CMDCODE_SHOW_NW_TOPOLOGY);
 				}
+		}
+	}
+
+	{
+		static param_t spf;
+		init_param(&spf, CMD, "spf", 0, 0, INVALID, 0, "Shortest SPF Path");
+		libcli_register_param(run, &spf);
+		{
+			static param_t all;
+			init_param(&all, CMD, "all", spf_algo_handler,
+							0, INVALID, 0, "All nodes");
+			libcli_register_param(&spf, &all);
+			set_param_cmd_code(&all, CMDCODE_RUN_SPF_ALL);
 		}
 	}
 
@@ -662,6 +699,20 @@ void nw_init_cli()
 					init_param(&if_name, LEAF, 0, 0,
 						0, STRING, "if-name", "Interface Name");
 					libcli_register_param(&interface, &if_name);
+					{
+						static param_t metric;
+						init_param(&metric, CMD, "metric", 0,
+						0, INVALID, 0, "\"metric\" keyword");
+						libcli_register_param(&if_name, &metric);
+						{
+							static param_t metric_val;
+							init_param(&metric_val, LEAF, 0, intf_config_handler,
+								validate_interface_metric_val, INT, "metric-val", "Metric Value(1-16777215)");
+							libcli_register_param(&metric, &metric_val);
+							set_param_cmd_code(&metric_val, CMDCODE_INTF_CONFIG_METRIC);
+						}
+					}
+					
 					{
 						static param_t if_up_down_status;
 						init_param(&if_up_down_status, LEAF, 0, intf_config_handler,
