@@ -18,6 +18,25 @@ l3_is_direct_route(l3_route_t *l3_route)
     return l3_route->is_direct;
 }
 
+
+nexthop_t *
+l3_route_get_active_nexthop(l3_route_t *l3_route)
+{
+	if(l3_is_direct_route(l3_route)) return NULL;
+
+	nexthop_t *nexthop = l3_route->nexthops[l3_route->nxthop_idx];
+	assert(nexthop);
+
+	l3_route->nxthop_idx++;
+
+	if(l3_route->nxthop_idx == MAX_NXT_HOPS ||
+		!l3_route->nexthops[l3_route->nxthop_idx]) {
+		l3_route->nxthop_idx = 0;	
+	}
+
+	return nexthop;
+}
+
 bool_t
 is_layer3_local_delivery(node_t *node, uint32_t dst_ip)
 {
@@ -293,7 +312,67 @@ demote_packet_to_layer3(node_t *node,
                         int protocol_number,
                         unsigned int dst_ip_addr)
 {
-    layer3_pkt_recv_from_top(node, pkt, size, protocol_number, dst_ip_addr);
+	ip_hdr_t iphdr;
+	initialize_ip_hdr(&iphdr);
+
+	iphdr.protocol = protocol_number;
+	uint32_t addr_int = 0;
+	addr_int = ip_p_to_n(NODE_LO_ADDR(node));
+	iphdr.src_ip = addr_int;
+	iphdr.dst_ip = dst_ip_addr;
+
+	iphdr.total_length = IP_HDR_COMPUTE_DEFAULT_TOTAL_LEN(size);
+	
+	char *new_pkt = NULL;
+	uint32_t new_pkt_size = 0;
+	
+	new_pkt_size = IP_HDR_TOTAL_LEN_IN_BYTES(&iphdr);
+	new_pkt = calloc(1, MAX_PKT_BUFFER_SIZE);
+
+	memcpy(new_pkt, (char *)&iphdr, IP_HDR_LEN_IN_BYTES(&iphdr));
+
+	if(pkt && size)
+		memcpy(new_pkt + IP_HDR_LEN_IN_BYTES(&iphdr), pkt, size);
+
+	l3_route_t *l3_route = l3rib_lookup_lpm(NODE_RT_TABLE(node), iphdr.dst_ip);
+
+	if(!l3_route) {
+		printf("Node : %s : No L3 route\n", node->name);
+		free(new_pkt);
+		return;
+	}
+
+	bool_t is_direct_route = pkt_buffer_shift_right(new_pkt, new_pkt_size, MAX_PACKET_BUFFER_SIZE);
+
+	if(is_direct_route) {
+		demote_pkt_to_layer2(node, dst_ip_addr, 
+			0,
+			shifted_pkt_buffer, new_pkt_size, 
+			ETH_IP);
+
+		return;
+	}
+
+	uint32_t next_hop_ip;
+	nexthop_t *nexthop = NULL;
+
+	nexthop = l3_route_get_active_nexthop(l3_route);
+
+	if(!nexthop) {
+		free(new_pkt);
+		return;
+	}
+
+	next_hop_ip = ip_p_to_n(nexthop->gw_ip);
+
+	demote_pkt_to_layer2(node, 
+		next_hop_ip, 
+		nexthop->oif->if_name, 
+		shifted_pkt_buffer, 
+		new_pkt_size, 
+		ETH_IP);
+
+	free(new_pkt);
 }
 
 static void
@@ -303,9 +382,7 @@ layer3_ip_pkt_recv_from_layer2(node_t *node,
                                unsigned int pkt_size)
 {
     char dst_ip_add[16];
-    
     ip_hdr_t *ip_hdr = pkt;
-    
     ip_n_to_p(ip_hdr->dst_ip, dst_ip_add);
     
     l3_route_t *l3_route = l3rib_lookup_lpm(NODE_RT_TABLE(node),
@@ -355,10 +432,14 @@ layer3_ip_pkt_recv_from_layer2(node_t *node,
     if(ip_hdr->ttl == 0) return;
     
     unsigned int next_hop_ip = 0;
+	nexthop_t *nexthop = NULL;
+	nexthop = l3_route_get_active_nexthop(l3_route);
+	assert(nexthop);
+	
     next_hop_ip = ip_p_to_n(l3_route->gw_ip);
     
     demote_pkt_to_layer2(node, next_hop_ip,
-                         l3_route->oif, (char *)ip_hdr,
+                         nexthop->oif->if_name, (char *)ip_hdr,
                          pkt_size, ETH_IP);
 }
 
