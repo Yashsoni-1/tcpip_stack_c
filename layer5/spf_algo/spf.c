@@ -180,6 +180,33 @@ spf_lookup_spf_result_by_node(node_t *spf_root, node_t *node)
 	return NULL:
 }
 
+static int
+spf_install_routes(node_t *spf_root)
+{
+	rt_table_t *rt_table = NODE_RT_TABLE(spf_root);
+
+	clear_rt_table(rt_table);
+
+	int i = 0;
+	int count = 0;
+	glthread_t *curr;
+	spf_result_t *spf_result;
+	nexthop_t *nexthop = NULL;
+
+	ITERATE_GLTHREAD_BEGIN(&spf_root->spf_data->spf_result_head, curr)
+	{
+		spf_result = spf_res_glue_to_spf_result(curr);
+		for(int i=0; i < MAX_NXT_HOPS; ++i) {
+			nexthop = spf_result->nexthops[i];
+			if(!nexthop) continue;
+			rt_table_add_route(rt_table, NODE_LO_ADDR(spf_result->node), 32, nexthop->gw_ip, nexthop->oif, spf_result->spf_metric);
+			++count;
+		}
+	} ITERATE_GLTHREAD_END(&spf_root->spf_data->spf_result_head, curr);
+
+	return count;
+}
+
 void initialize_direct_nbrs(node_t *spf_root)
 {
 	node_t *nbr = NULL;
