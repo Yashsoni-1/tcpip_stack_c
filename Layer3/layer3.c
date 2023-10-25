@@ -51,6 +51,31 @@ init_rt_table(rt_table_t **rt_table)
     init_glthread(&((*rt_table)->route_list));
 }
 
+static void
+l3_route_free(l3_route_t *l3_route)
+{
+	assert(IS_GLTHREAD_LIST_EMPTY(&l3_route->rt_glue));
+	spf_flush_nexthops(l3_route->nexthops);
+	free(l3_route);
+}
+
+void 
+clear_rt_table(rt_table_t *rt_table)
+{
+	glthread_t *curr;
+	l3_route_t *l3_route;
+
+	ITERATE_GLTHREAD_BEGIN(&rt_table->route_list, curr) 
+	{
+		l3_route = rt_glue_to_l3_route(curr);
+		if(l3_is_direct_route(l3_route))
+			continue;
+
+		remove_glthread(curr);
+		l3_route_free(l3_route);
+	} ITERATE_GLTHREAD_END(&rt_table->route_list, curr);
+}
+
 l3_route_t *
 rt_table_lookup(rt_table_t *rt_table, char *dest,
                 char mask)
