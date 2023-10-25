@@ -160,40 +160,69 @@ rt_table_add_direct_route(rt_table_t *rt_table,
 void
 rt_table_add_route(rt_table_t *rt_table,
                    char *dst, char mask,
-                   char *gw, char *oif)
+                   char *gw, interface_t *oif,
+		   uint32_t spf_metric)
 {
-    unsigned int dst_int;
+    uint32_t dst_int;
     char dst_str_with_mask[16];
-    
+    bool_t new_route = FALSE;
+	
     apply_mask(dst, mask, dst_str_with_mask);
     
-    inet_pton(AF_INET, dst_str_with_mask, &dst_int);
+    dst_int = ip_p_to_n(dst_str_with_mask);
     
-    l3_route_t *l3_route = l3rib_lookup_lpm(rt_table, dst_int);
+    l3_route_t *l3_route = l3rib_lookup_lpm(rt_table, dst_int, mask);
     
-    assert(!l3_route);
+    if(!l3_route) {
     
-    l3_route = calloc(1, sizeof(l3_route_t));
-    strncpy(l3_route->dest, dst_str_with_mask, 16);
-    l3_route->dest[15] = '\0';
-    l3_route->mask = mask;
-    
-    l3_route->is_direct = (!gw && !oif) ? TRUE : FALSE;
-    
+	    l3_route = calloc(1, sizeof(l3_route_t));
+	    strncpy(l3_route->dest, dst_str_with_mask, 16);
+	    l3_route->dest[15] = '\0';
+	    l3_route->mask = mask;
+	    new_route = TRUE;
+	    l3_route->is_direct = TRUE;
+	}
+
+	int i = 0;
+	
+	if(!new_route) {
+		for(; i < MAX_NXT_HOPS; ++i) {
+			if(l3_route->nexthops[i]) {
+				if(strncmp(l3_route->nexthops[i]->gw_ip, gw, 16) == 0 &&
+					l3_route->nexthops[i]->oif == oif) {
+					printf("Error : Attempt to Add Duplicate Route\n");
+					return;
+				}
+			}
+			else break;
+		}
+	}
+
+	if(i == MAX_NXT_HOPS) {
+		printf("Error: No Nexthop space left for route %s/%u\n", dst_str_with_mask, mask);
+		return;
+	}
+	
     if(gw && oif)
     {
-        strncpy(l3_route->gw_ip, gw, 16);
-        l3_route->gw_ip[15] = '\0';
-        strncpy(l3_route->oif, oif, IF_NAME_SIZE);
-        l3_route->oif[IF_NAME_SIZE - 1] = '\0';
+		nexthop_t *nexthop = calloc(1, sizeof(nexthop_t));
+		l3_route->nexthops[i] = nexthop;
+		l3_route->is_direct = FALSE;
+		l3_route->spf_metric = spf_metric;
+		nexthop->ref_count++;
+        strncpy(nexthop->gw_ip, gw, 16);
+        nexthop->gw_ip[15] = '\0';
+        nexthop->oif = oif;
     }
-    
-    if(!_rt_table_entry_add(rt_table, l3_route))
-    {
-        printf("Error : Route %s/%d Installation failed\n",
-               dst_str_with_mask, mask);
-        free(l3_route);
-    }
+
+	if(new_route) {
+	    if(!_rt_table_entry_add(rt_table, l3_route))
+	    {
+	        printf("Error : Route %s/%d Installation failed\n",
+	               dst_str_with_mask, mask);
+	        l3_route_free(l3_route);
+	    }
+	}
 }
 
 l3_route_t *
