@@ -97,7 +97,6 @@ GLTHREAD_TO_STRUCT(rt_glue_to_l3_route, l3_route_t, rt_glue);
 
 void
 init_rt_table(rt_table_t **rt_table);
-
 void
 rt_table_add_direct_route(rt_table_t *rt_table,
                           char *dst, char mask);
@@ -114,7 +113,8 @@ l3rib_lookup_lpm(rt_table_t *rt_table,
 void
 dump_rt_table(rt_table_t *rt_table);
 
-
+void 
+clear_rt_table(rt_table_t *rt_table);
 
 #define IS_L3_ROUTES_EQUAL(rt1, rt2) \
  ((strncmp(rt1->dest, rt2->dest, 16) == 0) && \
