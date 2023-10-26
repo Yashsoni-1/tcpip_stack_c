@@ -173,8 +173,7 @@ bool_t is_interface_l3_bidirectional(interface_t *interface);
 #define ITERATE_NODE_NBRS_BEGIN(node_ptr, nbr_ptr, oif_ptr, ip_addr_ptr) \
     do{ 																\
 			int i=0;													\
-			interface_t *other_intf;									\
-																		\						
+			interface_t *other_intf;									\						
 			for(i=0; i < MAX_INTF_PER_NODE; ++i) {						\
 				oif_ptr = node_ptr[i];									\
 				if(!oif_ptr) continue;									\
