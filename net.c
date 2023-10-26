@@ -120,6 +120,23 @@ node_get_matching_subnet_interface(node_t *node, char *ip_addr)
     return NULL;
 }
 
+bool_t is_same_subnet(char *ip_addr, char mask, char *other_ip_addr)
+{
+    char intf_subnet[16];
+    char subnet2[16];
+
+    memset(intf_subnet, 0, 16);
+    memset(subnet2, 0, 16);
+
+    apply_mask(ip_addr, mask, intf_subnet);
+    apply_mask(other_ip_addr, mask, subnet2);
+
+    if(strncmp(intf_subnet, subnet2, 16) == 0)
+        return TRUE;
+
+    return FALSE;
+}
+
 
 char *
 pkt_buffer_shift_right(char *pkt, unsigned int pkt_size,
@@ -303,7 +320,7 @@ bool_t is_interface_l3_bidirectional(interface_t *interface)
 {
     if(IF_L2_MODE(interface) == ACCESS || IF_L2_MODE(interface) == TRUNK) return FALSE;
 
-    if(!IF_L3_MODE(interface)) return FALSE;
+    if(!IS_INTF_L3_MODE(interface)) return FALSE;
 
     interface_t *other_interface = &interface->link->intf1 == interface ? 
                                     &interface->link->intf2 : &interface->link->intf1;
@@ -321,5 +338,5 @@ bool_t is_interface_l3_bidirectional(interface_t *interface)
             return FALSE;
         }
 
-    return TRUE:
+    return TRUE;
 }
