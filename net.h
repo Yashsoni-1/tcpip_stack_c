@@ -125,6 +125,7 @@ init_intf_nw_prop(intf_nw_props_t *intf_nw_prop)
 
 #define IF_MAC(intf_ptr) (intf_ptr->intf_nw_props.mac_add.mac)
 #define IF_IP(intf_ptr) (intf_ptr->intf_nw_props.ip_add.ip_addr)
+#define IF_MASK(intf_ptr) (intf_ptr->intf_nw_props.mask)
 #define IF_IS_UP(intf_ptr) ((intf_ptr)->intf_nw_props.is_up == TRUE)
 
 #define NODE_LO_ADD(node_ptr) (node_ptr->node_nw_prop.lp_addr.ip_addr)
@@ -144,6 +145,7 @@ void interface_assign_mac_address(interface_t *interface);
 interface_t *node_get_matching_subnet_interface(node_t *node,
                                                 char *ip_addr);
 
+bool_t is_same_subnet(char *ip_addr, char mask, char *other_ip_addr);
 
 char*
 pkt_buffer_shift_right(char *pkt, unsigned int pkt_size,
