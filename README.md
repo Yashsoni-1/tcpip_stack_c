@@ -1,6 +1,7 @@
 # TCP/IP STACK C
 
 ## GOALS
+- Implement Data Encapsulation amd De-encapsulation.
 - Implement Shortest Path Algorithm(Dijkstra Algorithm).
 
 ## TO DO NEXT
