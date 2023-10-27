@@ -177,7 +177,7 @@ spf_lookup_spf_result_by_node(node_t *spf_root, node_t *node)
 		}
 	} ITERATE_GLTHREAD_END(&spf_root->spf_data->spf_result_head, curr) 
 
-	return NULL:
+	return NULL;
 }
 
 static int
@@ -227,7 +227,7 @@ void initialize_direct_nbrs(node_t *spf_root)
 
 		else if(get_link_cost(oif) == SPF_METRIC(nbr)) {
 			nexthop = create_new_nexthop(oif);
-			spf_insert_new_nexthop(nbr->spf_data->nexthops, nexthops);
+			spf_insert_new_nexthop(nbr->spf_data->nexthops, nexthop);
 		}
 	} ITERATE_NODE_NBRS_END(spf_root, nbr, oif, nxt_hop_ip) ;
 }
@@ -260,15 +260,15 @@ spf_explore_nbrs(node_t *spf_root,
 		if(!is_interface_l3_bidirectional(oif)) continue;
 
 		if(SPF_METRIC(curr_node) + get_link_cost(oif) < SPF_METRIC(nbr)) {
-			spf_flush_nexthops(nbr->sfp_data->nexthops);
-			spf_union_nexthops_arrays(curr_node->spf_data->nexthops, nbr->spf_data->nexthops);
+			spf_flush_nexthops(nbr->spf_data->nexthops);
+			spf_union_nexthops_array(curr_node->spf_data->nexthops, nbr->spf_data->nexthops);
 			SPF_METRIC(nbr) = SPF_METRIC(curr_node) + get_link_cost(oif);
 
 			if(!IS_GLTHREAD_LIST_EMPTY(&nbr->spf_data->priority_thread_glue)) {
 				remove_glthread(&nbr->spf_data->priority_thread_glue);
 			}
 
-			glthread_priority_insert(&priority_lst, 
+			glthread_priority_insert(priority_lst, 
 				&nbr->spf_data->priority_thread_glue,
 				spf_comparison_fn,
 				spf_data_offset_from_priority_thread_glue);
