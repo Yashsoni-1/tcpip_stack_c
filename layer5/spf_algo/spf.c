@@ -274,7 +274,7 @@ spf_explore_nbrs(node_t *spf_root,
 				spf_data_offset_from_priority_thread_glue);
 		}
 		else if(SPF_METRIC(curr_node) + get_link_cost(oif) == SPF_METRIC(nbr)) {
-			spf_union_nexthops_arrays(curr_node->spf_data->nexthops, nbr->spf_data->nexthops);
+			spf_union_nexthops_array(curr_node->spf_data->nexthops, nbr->spf_data->nexthops);
 		}
 	} ITERATE_NODE_NBRS_END(curr_node, nbr, oif, nxt_hop_ip);
 
