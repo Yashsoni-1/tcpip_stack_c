@@ -331,7 +331,7 @@ bool_t is_interface_l3_bidirectional(interface_t *interface)
 
     if(IF_L2_MODE(other_interface) == ACCESS || IF_L2_MODE(interface) == TRUNK) return FALSE;
 
-    if(!IF_L3_MODE(other_interface)) return FALSE;
+    if(!IF_INTF_L3_MODE(other_interface)) return FALSE;
 
     if(!(is_same_subnet(IF_IP(interface), IF_MASK(interface), IF_IP(other_interface)) && 
          is_same_subnet(IF_IP(other_interface), IF_MASK(other_interface), IF_IP(interface)))) {
