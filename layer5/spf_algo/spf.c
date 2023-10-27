@@ -99,6 +99,8 @@ create_new_nexthop(interface_t *oif)
 	return nexthop;
 }
 
+
+
 static bool_t
 spf_insert_new_nexthop(nexthop_t **nexthop_array, nexthop_t *nexthop)
 {
@@ -404,7 +406,11 @@ spf_algo_handler(param_t *param, ser_buff_t *tlv_buf, op_mode enable_or_disable)
 		
 	}TLV_LOOP_END;
 
-	node = get_node_by_node_name(topo, node_name);
+	if(node_name)
+	{
+		node = get_node_by_node_name(topo, node_name);
+	}
+		
 
 	switch(CMDCODE) {
 		
@@ -414,9 +420,11 @@ spf_algo_handler(param_t *param, ser_buff_t *tlv_buf, op_mode enable_or_disable)
 		case CMDCODE_RUN_SPF:
 			compute_spf(node);
 			break;
-		
+		case CMDCODE_RUN_SPF_ALL:
+			compute_spf_all_routers(topo);
+			break;
 		default:
-			;
+			break;
 	}
 	
 	return 0;
