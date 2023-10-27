@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include "../gl_thread/gl_thread.h"
 #include <stdint.h>
+#include "../tcpconst.h"
 
 
 #pragma pack(push, 1)
@@ -53,6 +54,8 @@ initialize_ip_hdr(ip_hdr_t *ip_hdr)
     ip_hdr->src_ip = 0;
     ip_hdr->dst_ip = 0;
 }
+
+
 
 typedef struct nexthop_
 {
