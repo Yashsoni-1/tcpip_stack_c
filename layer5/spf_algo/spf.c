@@ -80,7 +80,7 @@ init_node_spf_data(node_t *node, bool_t delete_spf_result)
 
 	SPF_METRIC(node) = INFINITE_METRIC;
 	remove_glthread(&node->spf_data->priority_thread_glue);
-	spf_flush_nexthops(node->spf_data->nexthops[0]);
+	spf_flush_nexthops(node->spf_data->nexthops);
 }
 
 static nexthop_t *
@@ -214,14 +214,14 @@ void initialize_direct_nbrs(node_t *spf_root)
 	interface_t *oif = NULL;
 	nexthop_t *nexthop = NULL;
 
-	ITERATE_NODE_NBRS_BEGIN(spf_root, nbr, oif, nxt_hop_ip) 
+	ITERATE_NODE_NBRS_BEGIN(spf_root, nbr, oif, next_hop_ip) 
 	{
 		if(!is_interface_l3_bidirectional(oif)) continue;
 
 		if(get_link_cost(oif) < SPF_METRIC(nbr)) {
 			spf_flush_nexthops(nbr->spf_data->nexthops);
 			nexthop = create_new_nexthop(oif);
-			spf_insert_new_nexthop(nbr->spf_data->nexthops, nexthops);
+			spf_insert_new_nexthop(nbr->spf_data->nexthops, nexthop);
 			SPF_METRIC(nbr) = get_link_cost(oif);
 		}
 
@@ -253,7 +253,7 @@ spf_explore_nbrs(node_t *spf_root,
 {
 	node_t *nbr;
 	interface_t *oif;
-	char *nxt_hop_ip = NULL
+	char *nxt_hop_ip = NULL;
 
 	ITERATE_NODE_NBRS_BEGIN(curr_node, nbr, oif, nxt_hop_ip) 
 	{
@@ -278,7 +278,7 @@ spf_explore_nbrs(node_t *spf_root,
 		}
 	} ITERATE_NODE_NBRS_END(curr_node, nbr, oif, nxt_hop_ip);
 
-	spf_flush_nexthops(curr_node->spf_data->nexthops[0]);
+	spf_flush_nexthops(curr_node->spf_data->nexthops);
 }
 
 
@@ -363,14 +363,14 @@ static void show_spf_results(node_t *node)
 				printf("%-8s      OIF : %-7s    gateway : %-16s ref_count = %u\n",
 					nexthop_node_name(res->nexthops[i]),
 					oif->if_name, res->nexthops[i]->gw_ip,
-					res->nexthop[i]->ref_count);
+					res->nexthops[i]->ref_count);
 			}
 			else {
 				printf("                                          : "
 					"%-8s      OIF : %-7s    gateway : %-16s ref_count = %u\n",
 					nexthop_node_name(res->nexthops[i]),
 					oif->if_name, res->nexthops[i]->gw_ip,
-					res->nexthop[i]->ref_count);
+					res->nexthops[i]->ref_count);
 			}
 		}
 	} ITERATE_GLTHREAD_END(&node->spf_data->spf_result_head, curr);
