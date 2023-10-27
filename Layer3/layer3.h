@@ -110,7 +110,7 @@ rt_table_add_direct_route(rt_table_t *rt_table,
 void
 rt_table_add_route(rt_table_t *rt_table,
                    char *dst, char mask,
-                   char *gw, char *oif,
+                   char *gw, interface_t *oif,
                     uint32_t spf_metric);
 
 l3_route_t *
