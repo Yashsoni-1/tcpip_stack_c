@@ -65,7 +65,7 @@ typedef struct nexthop_
 } nexthop_t;
 
 #define nexthop_node_name(nexthop_ptr) \
-    ((get_nbr_node(nexthop_ptr->oif))->name);
+    ((get_nbr_node(nexthop_ptr->oif))->name)
 
 typedef struct l3_route_
 {
