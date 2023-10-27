@@ -1,8 +1,7 @@
 CC=gcc
 CFLAGS=-g
 TARGET:tcpstack.exe CommandParser/libcli.a pkt_gen.exe
-LIBS=-lpthread -L ./CommandParser -lcli -lrt
-
+LIBS=-lpthread -L ./CommandParser -lcli 
 OBJS=gl_thread/gl_thread.o \
             graph.o \
             topologies.o \
