@@ -34,6 +34,12 @@ struct link_
     unsigned int cost;
 } ;
 
+static inline uint32_t
+get_link_cost(interface_t *interface)
+{
+    return interface->link->cost;
+}
+
 typedef struct spf_data_ spf_data_t; 
 
 struct node_
