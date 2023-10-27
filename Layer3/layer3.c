@@ -3,7 +3,7 @@
 #include <arpa/inet.h>
 #include <assert.h>
 #include "comm.h"
-#include "..Layer2/layer2.h"
+#include "../Layer2/layer2.h"
 
 extern void
 demote_pkt_to_layer2(node_t *node,
