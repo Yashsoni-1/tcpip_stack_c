@@ -16,7 +16,7 @@ typedef struct spf_data_
 
 	uint32_t spf_metric;
 	glthread_t priority_thread_glue;
-	nexthop *nexthops[MAX_NXT_HOPS];
+	nexthop_t *nexthops[MAX_NXT_HOPS];
 } spf_data_t;
 GLTHREAD_TO_STRUCT(priority_thread_glue_to_spf_data, spf_data_t, priority_thread_glue);
 
@@ -46,7 +46,7 @@ void spf_flush_nexthops(nexthop_t **nexthop)
 				free(nexthop[i]);
 			}
 
-			nexthop[i] = NULL:
+			nexthop[i] = NULL;
 			
 		}
 	}
@@ -79,8 +79,8 @@ init_node_spf_data(node_t *node, bool_t delete_spf_result)
 	}
 
 	SPF_METRIC(node) = INFINITE_METRIC;
-	remove_glthread(&head->spf_data->priority_thread_glue);
-	spf_flush_nexthops(node->spf_data->nexthops);
+	remove_glthread(&node->spf_data->priority_thread_glue);
+	spf_flush_nexthops(node->spf_data->nexthops[0]);
 }
 
 static nexthop_t *
@@ -106,8 +106,8 @@ spf_insert_new_nexthop(nexthop_t **nexthop_array, nexthop_t *nexthop)
 
 	for(; i < MAX_NXT_HOPS; ++i) {
 		if(nexthop_array[i]) continue;
-		nexthop[i] = nexthop;
-		nexthop[i]->ref_count++;
+		nexthop_array[i] = nexthop;
+		nexthop_array[i]->ref_count++;
 		return TRUE;
 	}
 
@@ -171,7 +171,7 @@ spf_lookup_spf_result_by_node(node_t *spf_root, node_t *node)
 	spf_data_t *curr_spf_data;
 
 	ITERATE_GLTHREAD_BEGIN(&spf_root->spf_data->spf_result_head, curr) {
-		spr_result = spf_res_glue_to_spf_result(curr);
+		spf_result = spf_res_glue_to_spf_result(curr);
 		if(spf_result->node == node) {
 			return spf_result;
 		}
@@ -199,7 +199,7 @@ spf_install_routes(node_t *spf_root)
 		for(int i=0; i < MAX_NXT_HOPS; ++i) {
 			nexthop = spf_result->nexthops[i];
 			if(!nexthop) continue;
-			rt_table_add_route(rt_table, NODE_LO_ADDR(spf_result->node), 32, nexthop->gw_ip, nexthop->oif, spf_result->spf_metric);
+			rt_table_add_route(rt_table, NODE_LO_ADD(spf_result->node), 32, nexthop->gw_ip, nexthop->oif, spf_result->spf_metric);
 			++count;
 		}
 	} ITERATE_GLTHREAD_END(&spf_root->spf_data->spf_result_head, curr);
@@ -212,7 +212,7 @@ void initialize_direct_nbrs(node_t *spf_root)
 	node_t *nbr = NULL;
 	char *next_hop_ip = NULL;
 	interface_t *oif = NULL;
-	nexthop_t nexthop = NULL
+	nexthop_t *nexthop = NULL;
 
 	ITERATE_NODE_NBRS_BEGIN(spf_root, nbr, oif, nxt_hop_ip) 
 	{
@@ -240,7 +240,7 @@ spf_record_result(node_t *spf_root, node_t *processed_node)
 	
 	spf_result->node = processed_node;
 	spf_result->spf_metric = processed_node->spf_data->spf_metric;
-	spf_union_nexthops_arrays(processed_node->spf_data->nexthops, spf_result->nexthops);
+	spf_union_nexthops_array(processed_node->spf_data->nexthops, spf_result->nexthops);
 
 	init_glthread(&spf_result->spf_res_glue);
 	glthread_add_next(&spf_root->spf_data->spf_result_head, &spf_result->spf_res_glue);
@@ -278,7 +278,7 @@ spf_explore_nbrs(node_t *spf_root,
 		}
 	} ITERATE_NODE_NBRS_END(curr_node, nbr, oif, nxt_hop_ip);
 
-	spf_flush_nexthops(curr_node->spf_data->nexthops);
+	spf_flush_nexthops(curr_node->spf_data->nexthops[0]);
 }
 
 
