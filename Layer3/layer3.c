@@ -12,6 +12,9 @@ demote_pkt_to_layer2(node_t *node,
                      unsigned int pkt_size,
                      int protocol_number);
 
+extern void 
+spf_flush_nexthops(nexthops_t *nexthop);
+
 static bool_t
 l3_is_direct_route(l3_route_t *l3_route)
 {
@@ -130,21 +133,6 @@ delete_rt_table_entry(rt_table_t *rt_table, char *dest, char mask)
 static bool_t
 _rt_table_entry_add(rt_table_t *rt_table, l3_route_t *l3_route)
 {
-    l3_route_t *l3_route_old = rt_table_lookup(rt_table,
-                                               l3_route->dest,
-                                               l3_route->mask);
-    
-    if(l3_route_old && IS_L3_ROUTES_EQUAL(l3_route_old, l3_route))
-    {
-        return FALSE;
-    }
-    
-    if(l3_route_old)
-    {
-        delete_rt_table_entry(rt_table, l3_route_old->dest,
-                              l3_route_old->mask);
-    }
-    
     init_glthread(&l3_route->rt_glue);
     glthread_add_next(&rt_table->route_list, &l3_route->rt_glue);
     return TRUE;
@@ -154,7 +142,7 @@ void
 rt_table_add_direct_route(rt_table_t *rt_table,
                           char *dst, char mask)
 {
-   rt_table_add_route(rt_table, dst, mask, 0, 0);
+   rt_table_add_route(rt_table, dst, mask, 0, 0, 0);
 }
 
 void
@@ -171,7 +159,7 @@ rt_table_add_route(rt_table_t *rt_table,
     
     dst_int = ip_p_to_n(dst_str_with_mask);
     
-    l3_route_t *l3_route = l3rib_lookup_lpm(rt_table, dst_int, mask);
+    l3_route_t *l3_route = l3rib_lookup_lpm(rt_table, dst_int);
     
     if(!l3_route) {
     
@@ -265,75 +253,7 @@ l3rib_lookup_lpm(rt_table_t *rt_table,
 }
 
 
-static void
-layer3_pkt_recv_from_top(node_t *node, char *pkt, unsigned int size,
-                         int protocol_number, unsigned int dst_ip_addr)
-{
-    ip_hdr_t ip_hdr;
-    
-    initialize_ip_hdr(&ip_hdr);
-    
-    ip_hdr.protocol = protocol_number;
-    
-    unsigned int addr_int = 0;
-    
-    addr_int = ip_p_to_n(NODE_LO_ADD(node));
-    
-    ip_hdr.src_ip = addr_int;
-    ip_hdr.dst_ip = dst_ip_addr;
-    
-    ip_hdr.total_length = (unsigned short) ip_hdr.ihl +
-                          (unsigned short)(size/4) +
-                          (unsigned short) ((size % 4) ? 1 : 0);
-    
-    l3_route_t *l3_route = l3rib_lookup_lpm(NODE_RT_TABLE(node), ip_hdr.dst_ip);
-    
-    char ip_address[16];
-    
-    ip_n_to_p(dst_ip_addr, ip_address);
-    
-    if(!l3_route)
-    {
-        printf("Router %s : Cannot Route IP : %s\n",
-               node->name, ip_address);
-        return;
-    }
-    
-    char *new_pkt = NULL;
-    unsigned int new_pkt_size = 0;
-    
-    new_pkt_size = ip_hdr.total_length * 4;
-    new_pkt = calloc(1, MAX_PACKET_BUFFER_SIZE);
-    
-    memcpy(new_pkt, (char *)&ip_hdr, ip_hdr.ihl * 4);
-    
-    if(pkt && size)
-        memcpy(new_pkt + ip_hdr.ihl * 4, pkt, size);
-    
-    bool_t is_direct_route = l3_is_direct_route(l3_route);
-    
-    unsigned int next_hop_ip;
-    
-    if(!is_direct_route)
-    {
-        next_hop_ip =  ip_p_to_n(l3_route->gw_ip);
-    }
-    else
-    {
-        next_hop_ip = dst_ip_addr;
-    }
-    
-    char *shifted_pkt_buffer = pkt_buffer_shift_right(new_pkt,
-                                                      new_pkt_size,
-                                                      MAX_PACKET_BUFFER_SIZE);
-    
-    demote_pkt_to_layer2(node, next_hop_ip,
-                         is_direct_route ? 0 : l3_route->oif,
-                         shifted_pkt_buffer,
-                         new_pkt_size,
-                         ETH_IP);
-    free(new_pkt);
-}
+
 
 void
 demote_packet_to_layer3(node_t *node,
@@ -346,7 +266,7 @@ demote_packet_to_layer3(node_t *node,
 
 	iphdr.protocol = protocol_number;
 	uint32_t addr_int = 0;
-	addr_int = ip_p_to_n(NODE_LO_ADDR(node));
+	addr_int = ip_p_to_n(NODE_LO_ADD(node));
 	iphdr.src_ip = addr_int;
 	iphdr.dst_ip = dst_ip_addr;
 
@@ -356,7 +276,7 @@ demote_packet_to_layer3(node_t *node,
 	uint32_t new_pkt_size = 0;
 	
 	new_pkt_size = IP_HDR_TOTAL_LEN_IN_BYTES(&iphdr);
-	new_pkt = calloc(1, MAX_PKT_BUFFER_SIZE);
+	new_pkt = calloc(1, MAX_PACKET_BUFFER_SIZE);
 
 	memcpy(new_pkt, (char *)&iphdr, IP_HDR_LEN_IN_BYTES(&iphdr));
 
