@@ -177,7 +177,7 @@ bool_t is_interface_l3_bidirectional(interface_t *interface);
 		int i=0;													\
 		interface_t *other_intf;									\
 		for(i=0; i < MAX_INTF_PER_NODE; ++i) {						\
-			oif_ptr = node_ptr[i];										\
+			oif_ptr = node_ptr->interfaces[i];										\
 		if(!oif_ptr) continue;									\
 			other_intf = &oif_ptr->link->intf1 == oif_ptr ? 		\
 			&oif_ptr->link->intf2 : &oif_ptr->link->intf1;		\
