@@ -391,8 +391,8 @@ compute_spf_all_routers(graph_t *topo)
 int 
 spf_algo_handler(param_t *param, ser_buff_t *tlv_buf, op_mode enable_or_disable)
 {
-	node_t *node;
-	char *node_name;
+	node_t *node = NULL;
+	char *node_name = NULL;
 	
 	tlv_struct_t *tlv = NULL;
 	int CMDCODE = -1;
