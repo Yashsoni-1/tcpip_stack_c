@@ -5,7 +5,7 @@
 #include <stdio.h>
 #include "../gl_thread/gl_thread.h"
 #include <stdint.h>
-#include "../graph.h"
+
 
 #pragma pack(push, 1)
 
@@ -86,9 +86,8 @@ GLTHREAD_TO_STRUCT(rt_glue_to_l3_route, l3_route_t, rt_glue);
 
 
 #define IP_HDR_LEN_IN_BYTES(ip_hdr_ptr)     (ip_hdr_ptr->ihl * 4)
-#define IP_HDR_TOTAL_LEN_IN_BYTES(ip_hdr_ptr) \
-    (ip_hdr_ptr->total_length * 4)
-
+#define IP_HDR_TOTAL_LEN_IN_BYTES(ip_hdr_ptr) (ip_hdr_ptr->total_length * 4)
+    
 #define INCREMENT_IPHDR(ip_hdr_ptr) \
     ((char *)ip_hdr_ptr + (ip_hdr_ptr->ihl * 4))
 
@@ -96,7 +95,8 @@ GLTHREAD_TO_STRUCT(rt_glue_to_l3_route, l3_route_t, rt_glue);
     (IP_HDR_TOTAL_LEN_IN_BYTES(ip_hdr_ptr) - \
     IP_HDR_LEN_IN_BYTES(ip_hdr_ptr))
 
-
+#define IP_HDR_COMPUTE_DEFAULT_TOTAL_LEN(ip_payload_size) \
+    (5 + (short)(ip_payload_size/4) + (short)((ip_payload_size % 4) ? 1 : 0))
 
 void
 init_rt_table(rt_table_t **rt_table);
