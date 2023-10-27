@@ -13,7 +13,7 @@ demote_pkt_to_layer2(node_t *node,
                      int protocol_number);
 
 extern void 
-spf_flush_nexthops(nexthops_t *nexthop);
+spf_flush_nexthops(nexthop_t *nexthop);
 
 static bool_t
 l3_is_direct_route(l3_route_t *l3_route)
@@ -275,13 +275,13 @@ demote_packet_to_layer3(node_t *node,
 	char *new_pkt = NULL;
 	uint32_t new_pkt_size = 0;
 	
-	new_pkt_size = IP_HDR_TOTAL_LEN_IN_BYTES(&iphdr);
+	new_pkt_size = IP_HDR_TOTAL_LEN_IN_BYTES((&iphdr));
 	new_pkt = calloc(1, MAX_PACKET_BUFFER_SIZE);
 
-	memcpy(new_pkt, (char *)&iphdr, IP_HDR_LEN_IN_BYTES(&iphdr));
+	memcpy(new_pkt, (char *)&iphdr, IP_HDR_LEN_IN_BYTES((&iphdr)));
 
 	if(pkt && size)
-		memcpy(new_pkt + IP_HDR_LEN_IN_BYTES(&iphdr), pkt, size);
+		memcpy(new_pkt + IP_HDR_LEN_IN_BYTES((&iphdr)), pkt, size);
 
 	l3_route_t *l3_route = l3rib_lookup_lpm(NODE_RT_TABLE(node), iphdr.dst_ip);
 
@@ -291,7 +291,9 @@ demote_packet_to_layer3(node_t *node,
 		return;
 	}
 
-	bool_t is_direct_route = pkt_buffer_shift_right(new_pkt, new_pkt_size, MAX_PACKET_BUFFER_SIZE);
+	bool_t is_direct_route = l3_is_direct_route(l3_route);
+
+	char *shifter_pkt_buffer = pkt_buffer_shift_right(new_pkt, new_pkt_size, MAX_PACKET_BUFFER_SIZE);
 
 	if(is_direct_route) {
 		demote_pkt_to_layer2(node, dst_ip_addr, 
@@ -385,7 +387,7 @@ layer3_ip_pkt_recv_from_layer2(node_t *node,
 	nexthop = l3_route_get_active_nexthop(l3_route);
 	assert(nexthop);
 	
-    next_hop_ip = ip_p_to_n(l3_route->gw_ip);
+    next_hop_ip = ip_p_to_n(nexthop->gw_ip);
     
     demote_pkt_to_layer2(node, next_hop_ip,
                          nexthop->oif->if_name, (char *)ip_hdr,
@@ -420,6 +422,7 @@ void promote_pkt_to_layer3(node_t *node,
 void
 dump_rt_table(rt_table_t *rt_table)
 {
+	int i=0, count=0;
     l3_route_t *l3_route = NULL;
     glthread_t *curr = NULL;
     
@@ -428,11 +431,55 @@ dump_rt_table(rt_table_t *rt_table)
     ITERATE_GLTHREAD_BEGIN(&rt_table->route_list, curr)
     {
         l3_route = rt_glue_to_l3_route(curr);
+		count++;
+
+		if(l3_route->is_direct) 
+		{
+			if(count != 1) 
+			{
+				printf("\t|===================|=======|====================|==============|==========|\n");
+			}
+			else 
+			{
+				printf("\t|======= IP ========|== M ==|======== GW ========|===== Oif ====|== Cost ==|\n");	
+			}
+			 printf("\t|%-18s |  %-4d | %-18s | %-12s |          |\n",
+               l3_route->dest, l3_route->mask, "NA", "NA");
+
+			continue;
+		}
+
+		for(int i=0; i< MAX_NXT_HOPS; ++i) 
+		{
+			if(l3_route->nexthops[i])
+			{
+				if(i == 0)
+				{
+					if(count != 1)
+					{
+						printf("\t|===================|=======|====================|==============|==========|\n");	
+					}
+					else 
+					{
+						printf("\t|======= IP ========|== M ==|======== GW ========|===== Oif ====|== Cost ==|\n");	
+					}
+
+					printf("\t|%-18s |  %-4d | %-18s | %-12s |  %-4u    |\n",
+               			l3_route->dest,
+					 	l3_route->mask,
+					 	l3_route->nexhops[i]->gw_ip,
+					 	l3_route->nexhops[i]->oif->if_name,
+					 	l3_route->spf_metric);
+				}
+				else 
+				{
+					printf("\t|                   |          | %-18s | %-12s |          |\n",
+					 	l3_route->nexhops[i]->gw_ip,
+					 	l3_route->nexhops[i]->oif->if_name);
+				}
+			}
+		}
         
-        printf("\t%-18s %-4d %-18s %s\n",
-               l3_route->dest, l3_route->mask,
-               l3_route->is_direct ? "NA" : (char *)l3_route->gw_ip,
-               l3_route->is_direct ? "NA" : l3_route->oif);
-       
     }ITERATE_GLTHREAD_END(&rt_table->route_list, curr);
+	printf("\t|===================|=======|====================|==============|==========|\n");	
 }
