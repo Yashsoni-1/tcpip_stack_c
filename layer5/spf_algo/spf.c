@@ -218,6 +218,7 @@ void initialize_direct_nbrs(node_t *spf_root)
 
 	ITERATE_NODE_NBRS_BEGIN(spf_root, nbr, oif, next_hop_ip) 
 	{
+		if(!oif) continue;
 		if(!is_interface_l3_bidirectional(oif)) continue;
 
 		if(get_link_cost(oif) < SPF_METRIC(nbr)) {
