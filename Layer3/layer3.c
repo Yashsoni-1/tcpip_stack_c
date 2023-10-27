@@ -1,8 +1,9 @@
+#include "graph.h"
 #include "layer3.h"
 #include <arpa/inet.h>
 #include <assert.h>
 #include "comm.h"
-#include "graph.h"
+#include "..Layer2/layer2.h"
 
 extern void
 demote_pkt_to_layer2(node_t *node,
@@ -148,8 +149,8 @@ rt_table_add_direct_route(rt_table_t *rt_table,
 void
 rt_table_add_route(rt_table_t *rt_table,
                    char *dst, char mask,
-                   char *gw, interface_t *oif,
-		   uint32_t spf_metric)
+                   char *gw, char *oif,
+                    uint32_t spf_metric)
 {
     uint32_t dst_int;
     char dst_str_with_mask[16];
@@ -293,7 +294,7 @@ demote_packet_to_layer3(node_t *node,
 
 	bool_t is_direct_route = l3_is_direct_route(l3_route);
 
-	char *shifter_pkt_buffer = pkt_buffer_shift_right(new_pkt, new_pkt_size, MAX_PACKET_BUFFER_SIZE);
+	char *shifted_pkt_buffer = pkt_buffer_shift_right(new_pkt, new_pkt_size, MAX_PACKET_BUFFER_SIZE);
 
 	if(is_direct_route) {
 		demote_pkt_to_layer2(node, dst_ip_addr, 
@@ -467,15 +468,15 @@ dump_rt_table(rt_table_t *rt_table)
 					printf("\t|%-18s |  %-4d | %-18s | %-12s |  %-4u    |\n",
                			l3_route->dest,
 					 	l3_route->mask,
-					 	l3_route->nexhops[i]->gw_ip,
-					 	l3_route->nexhops[i]->oif->if_name,
+					 	l3_route->nexhop[i]->gw_ip,
+					 	l3_route->nexhop[i]->oif->if_name,
 					 	l3_route->spf_metric);
 				}
 				else 
 				{
 					printf("\t|                   |          | %-18s | %-12s |          |\n",
-					 	l3_route->nexhops[i]->gw_ip,
-					 	l3_route->nexhops[i]->oif->if_name);
+					 	l3_route->nexhop[i]->gw_ip,
+					 	l3_route->nexhop[i]->oif->if_name);
 				}
 			}
 		}
