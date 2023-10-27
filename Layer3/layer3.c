@@ -468,15 +468,15 @@ dump_rt_table(rt_table_t *rt_table)
 					printf("\t|%-18s |  %-4d | %-18s | %-12s |  %-4u    |\n",
                			l3_route->dest,
 					 	l3_route->mask,
-					 	l3_route->nexhops[i]->gw_ip,
-					 	l3_route->nexhops[i]->oif->if_name,
+					 	l3_route->nexthops[i]->gw_ip,
+					 	l3_route->nexthops[i]->oif->if_name,
 					 	l3_route->spf_metric);
 				}
 				else 
 				{
 					printf("\t|                   |          | %-18s | %-12s |          |\n",
-					 	l3_route->nexhops[i]->gw_ip,
-					 	l3_route->nexhops[i]->oif->if_name);
+					 	l3_route->nexthops[i]->gw_ip,
+					 	l3_route->nexthops[i]->oif->if_name);
 				}
 			}
 		}
