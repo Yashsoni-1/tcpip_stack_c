@@ -643,7 +643,7 @@ void nw_init_cli()
 			
 			{
 				static param_t spf_result;
-				init_param(&spf_result, CMD, "spf_result", spf_algo_handler,
+				init_param(&spf_result, CMD, "spf-result", spf_algo_handler,
 								0, INVALID, 0, "SPF results");
 				libcli_register_param(&node_name, &spf_result);
 				set_param_cmd_code(&spf_result, CMDCODE_SHOW_SPF_RESULTS);
