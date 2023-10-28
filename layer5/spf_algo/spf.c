@@ -299,7 +299,7 @@ void compute_spf(node_t *spf_root)
 	ITERATE_GLTHREAD_BEGIN(&topo->node_list, curr)
 	{
 		node = graph_glue_to_node(curr);
-		if(node = spf_root) continue;
+		if(node == spf_root) continue;
 		init_node_spf_data(node, FALSE);
 	} ITERATE_GLTHREAD_END(&topo->node_list, curr);
 
