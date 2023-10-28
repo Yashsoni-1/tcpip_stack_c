@@ -69,6 +69,7 @@ create_graph_node(graph_t *graph,
     
     init_node_nw_prop(&node->node_nw_prop);
     init_glthread(&node->graph_glue);
+    node->spf_data = NULL;
     
     glthread_add_next(&graph->node_list, &node->graph_glue);
     return node;
