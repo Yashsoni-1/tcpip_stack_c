@@ -29,3 +29,11 @@
 ## BUGS TO FIX
 - [x] Interface UP DOWN.
 - [ ] IP conversion. 
+
+Made a practical version of the OSI model. Implemented Data Link Layer(L2) and Network Layer(L3) from scratch. Also implemented L2 MAC and VLAN based forwarding.
+Built a Multinode Topology Emulation of Routers and Switches. Implemented L2, including ARP and L3 routing
+Created a Multinode Topology Emulation with Routers and Switches. Engineered Data Link Layer (L2) and Network Layer (L3) from scratch, incorporating L2 MAC and VLAN-based forwarding for efficient data transmission.
+Crafted packets from scratch, implementing the entire logic for parsing packet content, evaluating header details, and making informed decisions about packet handling. Additionally, integrated various protocols, including ARP, for comprehensive network functionality.
+
+
+Developed a C++ socket programming library over POSIX, enabling efficient management of multiple clients through multiplexing and concurrency. The library notifies the application about new client connections, disconnections, and received messages. Additionally, it ensures a graceful shutdown of the server for enhanced reliability.
